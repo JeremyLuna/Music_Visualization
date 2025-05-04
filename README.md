@@ -27,3 +27,4 @@ Spectrogram decomposition
 https://vizzy.io/
 https://app.onemaker.io/music-visualizer
 https://www.sonicvisualiser.org/
+https://www.videoproc.com/resource/spotify-visualizer.htm
