@@ -20,3 +20,10 @@ size or some kind of spark effect can reflect volume of a sound
 bass, percussive, and harmonic components can be visualized.
 
 If a file is ready, a scroll can fall depicting what can be anticipated, this should be a setting that can be turned off for vizualising the experience of a blind listen
+
+resources:
+https://github.com/ohollo/chord-extractor
+Spectrogram decomposition
+https://vizzy.io/
+https://app.onemaker.io/music-visualizer
+https://www.sonicvisualiser.org/
