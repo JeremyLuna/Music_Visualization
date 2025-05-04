@@ -2,6 +2,7 @@
 To explore methods of feature extraction of music relavent to visualizing the experience of listening to music.
 
 explore common synesthesia associations with music
+
 wrapping can pe used to view octave alignment "notes"
 logarithmic wrapping can be used to view harmonics and find the pitch of a note
 color can visualize what harmonics are present (ie fundamental-blue, fifth-yellow, major-third-red), full sounds might be white-ish
