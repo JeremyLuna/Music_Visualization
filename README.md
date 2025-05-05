@@ -31,6 +31,8 @@ need to compare Increase FFT resolution, parabola bin interpolation, (YIN, autoc
 
 Use Harmonic-Percussive Source Separation (HPSS) and display them differently
 
+can have retrospective or continuous mode, although microphone would have to be continuous
+
 resources:
 https://github.com/ohollo/chord-extractor
 Spectrogram decomposition
