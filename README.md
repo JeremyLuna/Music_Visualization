@@ -40,3 +40,6 @@ https://vizzy.io/
 https://app.onemaker.io/music-visualizer
 https://www.sonicvisualiser.org/
 https://www.videoproc.com/resource/spotify-visualizer.htm
+https://hydra.ojack.xyz/?sketch_id=ritchse_4
+https://butterchurnviz.com/
+
