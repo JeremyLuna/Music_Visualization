@@ -29,6 +29,8 @@ want option for weak computer real-time processing
 
 need to compare Increase FFT resolution, parabola bin interpolation, (YIN, autocorrelation, or a phase‐vocoded algorithms), or temporal tracking
 
+Use Harmonic-Percussive Source Separation (HPSS) and display them differently
+
 resources:
 https://github.com/ohollo/chord-extractor
 Spectrogram decomposition
