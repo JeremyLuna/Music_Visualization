@@ -11,7 +11,7 @@ color can visualize how strong harmonics and formants are present (ie fundamenta
 
 a shockwave can be used to visualize impact
 
-a bagdrop grid can visualize important intervals from the root
+a backdrop grid can visualize important intervals from the root
 
 shadows, outlines or lines can project at common intervals from played notes to visualize related notes to whats being played
 
