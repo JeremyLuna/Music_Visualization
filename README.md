@@ -5,6 +5,8 @@ Have factored oscilloscope view
 
 need to add:
 
+Adjustable harmonics
+
 microphone input
 
 scrubber
