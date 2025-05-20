@@ -20,6 +20,11 @@ piano rolled view
 can have retrospective or continuous mode, although microphone would have to be continuous
 
 resources:
+https://www.faberacoustical.com/apps/signalscope/signalscope_x/subs/pro.html
+https://pitchreader.com/
+https://minimeters.app/
+https://oxfordwaveresearch.com/products/spectrumviewapp/
+
 https://github.com/ohollo/chord-extractor
 Spectrogram decomposition
 https://vizzy.io/
