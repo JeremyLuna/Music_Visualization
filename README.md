@@ -24,6 +24,10 @@ https://www.faberacoustical.com/apps/signalscope/signalscope_x/subs/pro.html
 https://pitchreader.com/
 https://minimeters.app/
 https://oxfordwaveresearch.com/products/spectrumviewapp/
+https://vimeo.com/196216785
+https://delu.medium.com/a-perceptually-meaningful-audio-visualizer-ee72051781bc
+https://github.com/MTG/sms-tools-materials
+
 
 https://github.com/ohollo/chord-extractor
 Spectrogram decomposition
