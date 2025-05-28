@@ -20,6 +20,9 @@ piano rolled view
 can have retrospective or continuous mode, although microphone would have to be continuous
 
 resources:
+https://www.mathworks.com/help/wavelet/ref/vmd.html
+https://arxiv.org/pdf/2501.09174
+https://ww3.math.ucla.edu/camreport/cam13-22.pdf
 https://vamsivk1995.medium.com/introduction-to-variational-mode-decomposition-vmd-d7100210a56a
 https://vamsivk1995.medium.com/variational-mode-decomposition-part-2-the-maths-4a81a8e05076
 https://www.faberacoustical.com/apps/signalscope/signalscope_x/subs/pro.html
