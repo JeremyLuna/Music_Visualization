@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sliding Tab Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .tab-container {
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .tab {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 60px;
+            height: 120px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-radius: 0 0 15px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            text-align: center;
+            line-height: 1.2;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        }
+
+        .tab:hover {
+            opacity: 1;
+            transform: translateX(5px);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+
+        .tab.active {
+            opacity: 1;
+        }
+
+        .tab-content {
+            position: fixed;
+            left: -350px;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: white;
+            border-radius: 0 0 20px 0;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.3);
+            transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            padding: 30px;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .tab-content.open {
+            left: 0;
+        }
+
+        .tab-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .tab-content p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .tab-content details {
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tab-content summary {
+            background: #f8f9fa;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.2s ease;
+        }
+
+        .tab-content summary:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content details[open] summary {
+            background: #dee2e6;
+        }
+
+        .tab-content details .content {
+            padding: 15px;
+            background: white;
+        }
+
+        .tab-content details .content p {
+            margin-bottom: 10px;
+        }
+
+        .tab-content details .content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            color: #ff6b6b;
+            background: #f0f0f0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 998;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .main-content {
+            padding: 50px;
+            text-align: center;
+            color: white;
+            margin-left: 60px;
+        }
+
+        .main-content h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content p {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="tab-container">
+        <div class="tab" id="tab">
+            ⚙
+        </div>
+        <div class="tab-content" id="tabContent">
+            <button class="close-btn" id="closeBtn">&times;</button>
+            <h2>Settings Panel</h2>
+            <p>This is a sliding tab panel that demonstrates smooth animations and user interactions.</p>
+            
+            <details>
+                <summary>Panel Features</summary>
+                <div class="content">
+                    <p>The tab becomes visible when you hover over it, and this panel slides out smoothly when clicked.</p>
+                    <p>You can close this panel by clicking the X button, clicking outside the panel, or pressing the Escape key.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>Design Elements</summary>
+                <div class="content">
+                    <p>The design uses modern CSS techniques including gradients, shadows, and smooth transitions to create an engaging user experience.</p>
+                    <p>Features include responsive design, accessibility support, and smooth animations.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>Technical Details</summary>
+                <div class="content">
+                    <p>Built with vanilla HTML, CSS, and JavaScript for optimal performance.</p>
+                    <p>Uses CSS Grid and Flexbox for layout, and CSS transitions for animations.</p>
+                    <p>Keyboard navigation support included for accessibility.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>Sliding Tab Demo</h1>
+        <p>Hover over the tab on the left to see it appear, then click it to reveal the sliding panel. Click anywhere outside the panel to close it.</p>
+    </div>
+
+    <script>
+        const tab = document.getElementById('tab');
+        const tabContent = document.getElementById('tabContent');
+        const overlay = document.getElementById('overlay');
+        const closeBtn = document.getElementById('closeBtn');
+
+        let isOpen = false;
+
+        // Open panel when tab is clicked
+        tab.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openPanel();
+        });
+
+        // Close panel when close button is clicked
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closePanel();
+        });
+
+        // Close panel when overlay is clicked
+        overlay.addEventListener('click', closePanel);
+
+        // Close panel when clicking outside
+        document.addEventListener('click', function(e) {
+            if (isOpen && !tabContent.contains(e.target) && !tab.contains(e.target)) {
+                closePanel();
+            }
+        });
+
+        // Prevent clicks inside the panel from closing it
+        tabContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // Close panel with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isOpen) {
+                closePanel();
+            }
+        });
+
+        function openPanel() {
+            isOpen = true;
+            tabContent.classList.add('open');
+            overlay.classList.add('active');
+            tab.classList.add('active');
+        }
+
+        function closePanel() {
+            isOpen = false;
+            tabContent.classList.remove('open');
+            overlay.classList.remove('active');
+            tab.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
