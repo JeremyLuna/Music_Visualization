@@ -5,50 +5,6 @@ link.href = 'control_panel/control_panel.css';
 document.head.appendChild(link);
 
 // create and attach html elements
-/*
-<div class="overlay" id="overlay"></div>
-
-<div class="tab-container">
-    <div class="tab" id="tab">
-        ⚙
-    </div>
-    <div class="tab-content" id="tabContent">
-        <button class="close-btn" id="closeBtn">&times;</button>
-        <h2>Settings Panel</h2>
-        <p>This is a sliding tab panel that demonstrates smooth animations and user interactions.</p>
-        
-        <details>
-            <summary>Panel Features</summary>
-            <div class="content">
-                <p>The tab becomes visible when you hover over it, and this panel slides out smoothly when clicked.</p>
-                <p>You can close this panel by clicking the X button, clicking outside the panel, or pressing the Escape key.</p>
-            </div>
-        </details>
-
-        <details>
-            <summary>Design Elements</summary>
-            <div class="content">
-                <p>The design uses modern CSS techniques including gradients, shadows, and smooth transitions to create an engaging user experience.</p>
-                <p>Features include responsive design, accessibility support, and smooth animations.</p>
-            </div>
-        </details>
-
-        <details>
-            <summary>Technical Details</summary>
-            <div class="content">
-                <p>Built with vanilla HTML, CSS, and JavaScript for optimal performance.</p>
-                <p>Uses CSS Grid and Flexbox for layout, and CSS transitions for animations.</p>
-                <p>Keyboard navigation support included for accessibility.</p>
-            </div>
-        </details>
-    </div>
-</div>
-
-<div class="main-content">
-    <h1>Sliding Tab Demo</h1>
-    <p>Hover over the tab on the left to see it appear, then click it to reveal the sliding panel. Click anywhere outside the panel to close it.</p>
-</div>
-*/
 // Overlay
 const overlay = document.createElement('div');
 overlay.className = 'overlay';
@@ -144,7 +100,6 @@ document.body.appendChild(mainContent);
 
 
 // script
-
 let isOpen = false;
 
 // Open panel when tab is clicked

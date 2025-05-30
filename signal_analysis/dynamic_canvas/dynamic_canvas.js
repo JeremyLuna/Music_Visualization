@@ -5,11 +5,6 @@ canvas_css_link.href = 'dynamic_canvas/dynamic_canvas.css';  // URL of your styl
 document.head.appendChild(canvas_css_link);
 
 // create and attach html elements
-/*
-<div class="container">
-    <div class="canvas-area" id="canvasArea"></div>
-</div>
-*/
 const container = document.createElement('div');
 container.className = 'container';
 
