@@ -1,151 +1,142 @@
-// load related css
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = 'control_panel/control_panel.css';
-document.head.appendChild(link);
-
-// create and attach html elements
-// Overlay
-const overlay = document.createElement('div');
-overlay.className = 'overlay';
-overlay.id = 'overlay';
-document.body.appendChild(overlay);
-
-// Tab Container
-const tabContainer = document.createElement('div');
-tabContainer.className = 'tab-container';
-
-// Tab Button
-const tab = document.createElement('div');
-tab.className = 'tab';
-tab.id = 'tab';
-tab.textContent = '⚙';
-tabContainer.appendChild(tab);
-
-// Tab Content
-const tabContent = document.createElement('div');
-tabContent.className = 'tab-content';
-tabContent.id = 'tabContent';
-
-// Close Button
-const closeBtn = document.createElement('button');
-closeBtn.className = 'close-btn';
-closeBtn.id = 'closeBtn';
-closeBtn.innerHTML = '&times;';
-tabContent.appendChild(closeBtn);
-
-// Heading and paragraph
-const heading = document.createElement('h2');
-heading.textContent = 'Settings Panel';
-tabContent.appendChild(heading);
-
-const intro = document.createElement('p');
-intro.textContent = 'This is a sliding tab panel that demonstrates smooth animations and user interactions.';
-tabContent.appendChild(intro);
-
-// Helper function to create a <details> section
-function createDetails(summaryText, paragraphTexts) {
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = summaryText;
-    details.appendChild(summary);
-
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'content';
-
-    paragraphTexts.forEach(text => {
-        const p = document.createElement('p');
-        p.textContent = text;
-        contentDiv.appendChild(p);
-    });
-
-    details.appendChild(contentDiv);
-    return details;
-}
-
-// Append details sections
-tabContent.appendChild(createDetails('Panel Features', [
-    'The tab becomes visible when you hover over it, and this panel slides out smoothly when clicked.',
-    'You can close this panel by clicking the X button, clicking outside the panel, or pressing the Escape key.'
-]));
-
-tabContent.appendChild(createDetails('Design Elements', [
-    'The design uses modern CSS techniques including gradients, shadows, and smooth transitions to create an engaging user experience.',
-    'Features include responsive design, accessibility support, and smooth animations.'
-]));
-
-tabContent.appendChild(createDetails('Technical Details', [
-    'Built with vanilla HTML, CSS, and JavaScript for optimal performance.',
-    'Uses CSS Grid and Flexbox for layout, and CSS transitions for animations.',
-    'Keyboard navigation support included for accessibility.'
-]));
-
-tabContainer.appendChild(tabContent);
-document.body.appendChild(tabContainer);
-
-// Main Content
-const mainContent = document.createElement('div');
-mainContent.className = 'main-content';
-
-const mainHeading = document.createElement('h1');
-mainHeading.textContent = 'Sliding Tab Demo';
-
-const mainPara = document.createElement('p');
-mainPara.textContent = 'Hover over the tab on the left to see it appear, then click it to reveal the sliding panel. Click anywhere outside the panel to close it.';
-
-mainContent.appendChild(mainHeading);
-mainContent.appendChild(mainPara);
-
-document.body.appendChild(mainContent);
-
-
-// script
-let isOpen = false;
-
-// Open panel when tab is clicked
-tab.addEventListener('click', function(e) {
-    e.stopPropagation();
-    openPanel();
-});
-
-// Close panel when close button is clicked
-closeBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    closePanel();
-});
-
-// Close panel when overlay is clicked
-overlay.addEventListener('click', closePanel);
-
-// Close panel when clicking outside
-document.addEventListener('click', function(e) {
-    if (isOpen && !tabContent.contains(e.target) && !tab.contains(e.target)) {
-        closePanel();
+// controlPanel.js
+export class ControlPanel {
+    constructor(options = {}) {
+        this.cssPath = options.cssPath || 'control_panel/control_panel.css';
+        this.isOpen = false;
+        this.init();
     }
-});
 
-// Prevent clicks inside the panel from closing it
-tabContent.addEventListener('click', function(e) {
-    e.stopPropagation();
-});
-
-// Close panel with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && isOpen) {
-        closePanel();
+    init() {
+        this.loadStyles();
+        this.createElements();
+        this.attachEvents();
     }
-});
 
-function openPanel() {
-    isOpen = true;
-    tabContent.classList.add('open');
-    overlay.classList.add('active');
-    tab.classList.add('active');
-}
+    loadStyles() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = this.cssPath;
+        document.head.appendChild(link);
+    }
 
-function closePanel() {
-    isOpen = false;
-    tabContent.classList.remove('open');
-    overlay.classList.remove('active');
-    tab.classList.remove('active');
+    createElements() {
+        // Overlay
+        this.overlay = this.createEl('div', 'overlay', 'overlay');
+        document.body.appendChild(this.overlay);
+
+        // Tab container
+        this.tabContainer = this.createEl('div', 'tab-container');
+        document.body.appendChild(this.tabContainer);
+
+        // Tab button
+        this.tab = this.createEl('div', 'tab', 'tab', '⚙');
+        this.tabContainer.appendChild(this.tab);
+
+        // Tab content
+        this.tabContent = this.createEl('div', 'tab-content', 'tabContent');
+        this.tabContainer.appendChild(this.tabContent);
+
+        // Close button
+        this.closeBtn = this.createEl('button', 'close-btn', 'closeBtn');
+        this.closeBtn.innerHTML = '&times;';
+        this.tabContent.appendChild(this.closeBtn);
+
+        // Heading and intro
+        this.tabContent.appendChild(this.createTextEl('h2', 'Settings Panel'));
+        this.tabContent.appendChild(this.createTextEl('p', 'This is a sliding tab panel that demonstrates smooth animations and user interactions.'));
+
+        // Details sections
+        this.tabContent.appendChild(this.createDetails('Panel Features', [
+            'The tab becomes visible when you hover over it, and this panel slides out smoothly when clicked.',
+            'You can close this panel by clicking the X button, clicking outside the panel, or pressing the Escape key.'
+        ]));
+
+        this.tabContent.appendChild(this.createDetails('Design Elements', [
+            'The design uses modern CSS techniques including gradients, shadows, and smooth transitions to create an engaging user experience.',
+            'Features include responsive design, accessibility support, and smooth animations.'
+        ]));
+
+        this.tabContent.appendChild(this.createDetails('Technical Details', [
+            'Built with vanilla HTML, CSS, and JavaScript for optimal performance.',
+            'Uses CSS Grid and Flexbox for layout, and CSS transitions for animations.',
+            'Keyboard navigation support included for accessibility.'
+        ]));
+
+        // Main content (demo only, not necessarily part of the module)
+        /*const mainContent = this.createEl('div', 'main-content');
+        mainContent.appendChild(this.createTextEl('h1', 'Sliding Tab Demo'));
+        mainContent.appendChild(this.createTextEl('p', 'Hover over the tab on the left to see it appear, then click it to reveal the sliding panel. Click anywhere outside the panel to close it.'));
+        document.body.appendChild(mainContent);*/
+    }
+
+    attachEvents() {
+        this.tab.addEventListener('click', e => {
+            e.stopPropagation();
+            this.openPanel();
+        });
+
+        this.closeBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            this.closePanel();
+        });
+
+        this.overlay.addEventListener('click', () => this.closePanel());
+
+        document.addEventListener('click', e => {
+            if (this.isOpen && !this.tabContent.contains(e.target) && !this.tab.contains(e.target)) {
+                this.closePanel();
+            }
+        });
+
+        this.tabContent.addEventListener('click', e => e.stopPropagation());
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.closePanel();
+            }
+        });
+    }
+
+    createDetails(summaryText, paragraphTexts) {
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = summaryText;
+        details.appendChild(summary);
+
+        const contentDiv = this.createEl('div', 'content');
+        paragraphTexts.forEach(text => {
+            contentDiv.appendChild(this.createTextEl('p', text));
+        });
+
+        details.appendChild(contentDiv);
+        return details;
+    }
+
+    createEl(tag, className = '', id = '', text = '') {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (id) el.id = id;
+        if (text) el.textContent = text;
+        return el;
+    }
+
+    createTextEl(tag, text) {
+        const el = document.createElement(tag);
+        el.textContent = text;
+        return el;
+    }
+
+    openPanel() {
+        this.isOpen = true;
+        this.tabContent.classList.add('open');
+        this.overlay.classList.add('active');
+        this.tab.classList.add('active');
+    }
+
+    closePanel() {
+        this.isOpen = false;
+        this.tabContent.classList.remove('open');
+        this.overlay.classList.remove('active');
+        this.tab.classList.remove('active');
+    }
 }
