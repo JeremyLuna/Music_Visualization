@@ -1,319 +1,279 @@
-// load related css
-const canvas_css_link = document.createElement('link');
-canvas_css_link.rel = 'stylesheet';
-canvas_css_link.href = 'dynamic_canvas/dynamic_canvas.css';  // URL of your stylesheet
-document.head.appendChild(canvas_css_link);
-
-// create and attach html elements
-const container = document.createElement('div');
-container.className = 'container';
-
-const canvasArea = document.createElement('div');
-canvasArea.className = 'canvas-area';
-canvasArea.id = 'canvasArea';
-
-container.appendChild(canvasArea);
-document.body.appendChild(container);
-
-let layoutTree = {
-    id: 'root',
-    type: 'canvas',
-    color: getRandomColor()
-};
-
-let dragState = null;
-
-function getRandomColor() {
-    const colors = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-        '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D2B4DE'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
-function generateId() {
-    return 'canvas_' + Math.random().toString(36).substr(2, 9);
-}
-
-function findNodeById(tree, id) {
-    if (tree.id === id) return tree;
-    if (tree.children) {
-        for (let child of tree.children) {
-            const result = findNodeById(child, id);
-            if (result) return result;
-        }
-    }
-    return null;
-}
-
-function findParentById(tree, id) {
-    if (tree.children) {
-        for (let child of tree.children) {
-            if (child.id === id) return tree;
-            const result = findParentById(child, id);
-            if (result) return result;
-        }
-    }
-    return null;
-}
-
-function splitCanvas(canvasId, direction) {
-    const node = findNodeById(layoutTree, canvasId);
-    if (!node || node.type !== 'canvas') return;
-
-    const newCanvas = {
-        id: generateId(),
-        type: 'canvas',
-        color: getRandomColor()
-    };
-
-    const newContainer = {
-        id: generateId(),
-        type: 'split',
-        direction: direction,
-        children: [
-            { ...node, id: generateId() },
-            newCanvas
-        ],
-        sizes: [50, 50]
-    };
-
-    // Check if this canvas is the root of the entire tree
-    if (node.id === layoutTree.id) {
-        layoutTree = newContainer;
-    } else {
-        const parent = findParentById(layoutTree, canvasId);
-        if (!parent) {
-            console.error('Could not find parent for canvas:', canvasId);
-            return;
-        }
-        const index = parent.children.findIndex(child => child.id === canvasId);
-        if (index === -1) {
-            console.error('Could not find canvas in parent children:', canvasId);
-            return;
-        }
-        parent.children[index] = newContainer;
-    }
-
-    render();
-}
-
-function splitHorizontal(canvasId) {
-    splitCanvas(canvasId, 'horizontal');
-}
-
-function splitVertical(canvasId) {
-    splitCanvas(canvasId, 'vertical');
-}
-
-function removeCanvas(canvasId) {
-    // Don't allow removing the root canvas if it's the only one
-    if (canvasId === layoutTree.id && layoutTree.type === 'canvas') return;
-
-    const parent = findParentById(layoutTree, canvasId);
-    if (!parent || !parent.children) {
-        console.error('Could not find parent for canvas:', canvasId);
-        return;
-    }
-
-    const index = parent.children.findIndex(child => child.id === canvasId);
-    if (index === -1) {
-        console.error('Could not find canvas in parent children:', canvasId);
-        return;
-    }
-
-    // Remove the selected canvas
-    parent.children.splice(index, 1);
-
-    // If parent now has only one child, replace parent with that child
-    if (parent.children.length === 1) {
-        const remaining = parent.children[0];
-        const grandParent = findParentById(layoutTree, parent.id);
-        
-        if (!grandParent) {
-            // Parent is root
-            layoutTree = remaining;
-        } else {
-            const parentIndex = grandParent.children.findIndex(child => child.id === parent.id);
-            grandParent.children[parentIndex] = remaining;
-        }
-    }
-
-    render();
-}
-
-
-
-function renderNode(node, container) {
-    if (node.type === 'canvas') {
-        const panel = document.createElement('div');
-        panel.className = 'canvas-panel';
-        panel.style.flex = '1';
-        
-        const content = document.createElement('div');
-        content.className = 'canvas-content';
-        content.style.backgroundColor = node.color;
-        content.textContent = `Canvas ${node.id.split('_')[1] || 'Root'}`;
-        
-        // Add hover controls
-        const controls = document.createElement('div');
-        controls.className = 'canvas-controls';
-        
-        // Split horizontal button
-        const splitHBtn = document.createElement('button');
-        splitHBtn.className = 'control-btn';
-        splitHBtn.innerHTML = '→';
-        splitHBtn.title = 'Split horizontally';
-        splitHBtn.onclick = (e) => {
-            e.stopPropagation();
-            splitHorizontal(node.id);
+// dynamicCanvas.js
+export class DynamicCanvas {
+    constructor(options = {}) {
+        this.cssPath = options.cssPath || 'dynamic_canvas/dynamic_canvas.css';
+        this.layoutTree = {
+            id: 'root',
+            type: 'canvas',
+            color: this.getRandomColor()
         };
-        
-        // Split vertical button
-        const splitVBtn = document.createElement('button');
-        splitVBtn.className = 'control-btn';
-        splitVBtn.innerHTML = '↓';
-        splitVBtn.title = 'Split vertically';
-        splitVBtn.onclick = (e) => {
-            e.stopPropagation();
-            splitVertical(node.id);
-        };
-        
-        controls.appendChild(splitHBtn);
-        controls.appendChild(splitVBtn);
+        this.dragState = null;
+        this.hideUITimer = null;
+        this.HIDE_DELAY = 2500;
+        this.init();
+    }
 
-        // Remove button (only show if not the only root canvas)
-        if (!(node.id === layoutTree.id && layoutTree.type === 'canvas')) {
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'control-btn remove';
-            removeBtn.innerHTML = '✕';
-            removeBtn.title = 'Remove canvas';
-            removeBtn.onclick = (e) => {
-                e.stopPropagation();
-                removeCanvas(node.id);
-            };
-            controls.appendChild(removeBtn);
-        }
-        
-        panel.appendChild(content);
-        panel.appendChild(controls);
-        
-        container.appendChild(panel);
-    } else if (node.type === 'split') {
-        const splitContainer = document.createElement('div');
-        splitContainer.className = `split-container split-${node.direction}`;
-        splitContainer.style.flex = '1';
-        
-        for (let i = 0; i < node.children.length; i++) {
-            const child = node.children[i];
-            const childContainer = document.createElement('div');
-            childContainer.style.flex = `${node.sizes[i] || 50}`;
-            childContainer.style.display = 'flex';
-            
-            renderNode(child, childContainer);
-            splitContainer.appendChild(childContainer);
-            
-            // Add divider after each child except the last one
-            if (i < node.children.length - 1) {
-                const divider = document.createElement('div');
-                divider.className = `divider ${node.direction}-divider`;
-                
-                let startPos, startSizes;
-                
-                divider.onmousedown = (e) => {
-                    e.preventDefault();
-                    divider.classList.add('dragging');
-                    document.body.classList.add('dragging');
-                    if (node.direction === 'vertical') {
-                        document.body.classList.add('dragging-vertical');
-                    }
-                    
-                    startPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
-                    startSizes = [...node.sizes];
-                    
-                    const leftChild = splitContainer.children[i * 2]; // Every other child (skip dividers)
-                    const rightChild = splitContainer.children[(i + 1) * 2];
-                    
-                    const onMouseMove = (e) => {
-                        e.preventDefault();
-                        requestAnimationFrame(() => {
-                            const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
-                            const delta = currentPos - startPos;
-                            const containerSize = node.direction === 'horizontal' ? 
-                                splitContainer.offsetWidth : splitContainer.offsetHeight;
-                            const deltaPercent = (delta / containerSize) * 100;
-                            
-                            const newSize1 = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
-                            const newSize2 = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
-                            
-                            // Update flex values directly for smooth resizing
-                            leftChild.style.flex = newSize1;
-                            rightChild.style.flex = newSize2;
-                        });
-                    };
-                    
-                    const onMouseUp = (finalEvent) => {
-                        divider.classList.remove('dragging');
-                        document.body.classList.remove('dragging', 'dragging-vertical');
-                        
-                        // Update the data model with final sizes
-                        const currentPos = node.direction === 'horizontal' ? 
-                            (finalEvent?.clientX || startPos) : (finalEvent?.clientY || startPos);
-                        const delta = currentPos - startPos;
-                        const containerSize = node.direction === 'horizontal' ? 
-                            splitContainer.offsetWidth : splitContainer.offsetHeight;
-                        const deltaPercent = (delta / containerSize) * 100;
-                        
-                        node.sizes[i] = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
-                        node.sizes[i + 1] = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
-                        
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                    };
-                    
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                };
-                
-                splitContainer.appendChild(divider);
+    init() {
+        this.loadStyles();
+        this.createDOM();
+        this.render();
+        this.setupUIAutoHide();
+    }
+
+    loadStyles() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = this.cssPath;
+        document.head.appendChild(link);
+    }
+
+    createDOM() {
+        this.container = this.createEl('div', 'container');
+        this.canvasArea = this.createEl('div', 'canvas-area', 'canvasArea');
+        this.container.appendChild(this.canvasArea);
+        document.body.appendChild(this.container);
+    }
+
+    getRandomColor() {
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+            '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+            '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D2B4DE'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    generateId() {
+        return 'canvas_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    findNodeById(tree, id) {
+        if (tree.id === id) return tree;
+        if (tree.children) {
+            for (const child of tree.children) {
+                const result = this.findNodeById(child, id);
+                if (result) return result;
             }
         }
-        
-        container.appendChild(splitContainer);
+        return null;
+    }
+
+    findParentById(tree, id) {
+        if (tree.children) {
+            for (const child of tree.children) {
+                if (child.id === id) return tree;
+                const result = this.findParentById(child, id);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    splitCanvas(canvasId, direction) {
+        const node = this.findNodeById(this.layoutTree, canvasId);
+        if (!node || node.type !== 'canvas') return;
+
+        const newCanvas = {
+            id: this.generateId(),
+            type: 'canvas',
+            color: this.getRandomColor()
+        };
+
+        const newContainer = {
+            id: this.generateId(),
+            type: 'split',
+            direction,
+            children: [
+                { ...node, id: this.generateId() },
+                newCanvas
+            ],
+            sizes: [50, 50]
+        };
+
+        if (node.id === this.layoutTree.id) {
+            this.layoutTree = newContainer;
+        } else {
+            const parent = this.findParentById(this.layoutTree, canvasId);
+            if (!parent) return;
+            const index = parent.children.findIndex(child => child.id === canvasId);
+            if (index === -1) return;
+            parent.children[index] = newContainer;
+        }
+
+        this.render();
+    }
+
+    splitHorizontal(id) {
+        this.splitCanvas(id, 'horizontal');
+    }
+
+    splitVertical(id) {
+        this.splitCanvas(id, 'vertical');
+    }
+
+    removeCanvas(id) {
+        if (id === this.layoutTree.id && this.layoutTree.type === 'canvas') return;
+
+        const parent = this.findParentById(this.layoutTree, id);
+        if (!parent || !parent.children) return;
+
+        const index = parent.children.findIndex(child => child.id === id);
+        if (index === -1) return;
+
+        parent.children.splice(index, 1);
+
+        if (parent.children.length === 1) {
+            const remaining = parent.children[0];
+            const grandParent = this.findParentById(this.layoutTree, parent.id);
+
+            if (!grandParent) {
+                this.layoutTree = remaining;
+            } else {
+                const parentIndex = grandParent.children.findIndex(child => child.id === parent.id);
+                grandParent.children[parentIndex] = remaining;
+            }
+        }
+
+        this.render();
+    }
+
+    render() {
+        this.canvasArea.innerHTML = '';
+        this.renderNode(this.layoutTree, this.canvasArea);
+    }
+
+    renderNode(node, container) {
+        if (node.type === 'canvas') {
+            const panel = this.createEl('div', 'canvas-panel');
+            panel.style.flex = '1';
+
+            const content = this.createEl('div', 'canvas-content');
+            content.style.backgroundColor = node.color;
+            content.textContent = `Canvas ${node.id.split('_')[1] || 'Root'}`;
+
+            const controls = this.createEl('div', 'canvas-controls');
+
+            const btn = (label, title, handler) => {
+                const b = this.createEl('button', 'control-btn');
+                b.innerHTML = label;
+                b.title = title;
+                b.onclick = (e) => {
+                    e.stopPropagation();
+                    handler();
+                };
+                return b;
+            };
+
+            controls.appendChild(btn('→', 'Split horizontally', () => this.splitHorizontal(node.id)));
+            controls.appendChild(btn('↓', 'Split vertically', () => this.splitVertical(node.id)));
+
+            if (!(node.id === this.layoutTree.id && this.layoutTree.type === 'canvas')) {
+                const rm = btn('✕', 'Remove canvas', () => this.removeCanvas(node.id));
+                rm.classList.add('remove');
+                controls.appendChild(rm);
+            }
+
+            panel.appendChild(content);
+            panel.appendChild(controls);
+            container.appendChild(panel);
+
+        } else if (node.type === 'split') {
+            const splitContainer = this.createEl('div', `split-container split-${node.direction}`);
+            splitContainer.style.flex = '1';
+
+            node.children.forEach((child, i) => {
+                const childContainer = this.createEl('div');
+                childContainer.style.flex = `${node.sizes[i] || 50}`;
+                childContainer.style.display = 'flex';
+
+                this.renderNode(child, childContainer);
+                splitContainer.appendChild(childContainer);
+
+                if (i < node.children.length - 1) {
+                    const divider = this.createEl('div', `divider ${node.direction}-divider`);
+                    this.setupDividerDragging(divider, node, i, splitContainer);
+                    splitContainer.appendChild(divider);
+                }
+            });
+
+            container.appendChild(splitContainer);
+        }
+    }
+
+    setupDividerDragging(divider, node, i, splitContainer) {
+        let startPos, startSizes;
+        divider.onmousedown = (e) => {
+            e.preventDefault();
+            divider.classList.add('dragging');
+            document.body.classList.add('dragging');
+            if (node.direction === 'vertical') {
+                document.body.classList.add('dragging-vertical');
+            }
+
+            startPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
+            startSizes = [...node.sizes];
+            const leftChild = splitContainer.children[i * 2];
+            const rightChild = splitContainer.children[(i + 1) * 2];
+
+            const onMouseMove = (e) => {
+                requestAnimationFrame(() => {
+                    const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
+                    const delta = currentPos - startPos;
+                    const containerSize = node.direction === 'horizontal'
+                        ? splitContainer.offsetWidth : splitContainer.offsetHeight;
+                    const deltaPercent = (delta / containerSize) * 100;
+
+                    const newSize1 = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
+                    const newSize2 = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
+
+                    leftChild.style.flex = newSize1;
+                    rightChild.style.flex = newSize2;
+                });
+            };
+
+            const onMouseUp = (e) => {
+                divider.classList.remove('dragging');
+                document.body.classList.remove('dragging', 'dragging-vertical');
+
+                const currentPos = node.direction === 'horizontal'
+                    ? (e?.clientX || startPos) : (e?.clientY || startPos);
+                const delta = currentPos - startPos;
+                const containerSize = node.direction === 'horizontal'
+                    ? splitContainer.offsetWidth : splitContainer.offsetHeight;
+                const deltaPercent = (delta / containerSize) * 100;
+
+                node.sizes[i] = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
+                node.sizes[i + 1] = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
+
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        };
+    }
+
+    createEl(tag, className = '', id = '') {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (id) el.id = id;
+        return el;
+    }
+
+    setupUIAutoHide() {
+        const showUI = () => {
+            document.body.classList.remove('hide-ui');
+            clearTimeout(this.hideUITimer);
+            this.hideUITimer = setTimeout(() => {
+                document.body.classList.add('hide-ui');
+            }, this.HIDE_DELAY);
+        };
+
+        document.addEventListener('mousemove', showUI);
+        document.addEventListener('mousedown', showUI);
+        document.addEventListener('keydown', showUI);
+
+        showUI(); // initial kick-off
     }
 }
-
-function render() {
-    const canvasArea = document.getElementById('canvasArea');
-    canvasArea.innerHTML = '';
-    renderNode(layoutTree, canvasArea);
-}
-
-// Initial render
-render();
-
-// Auto-hide UI after inactivity
-let hideUITimer = null;
-const HIDE_DELAY = 2500; // 2.5 seconds
-
-function showUI() {
-    document.body.classList.remove('hide-ui');
-    clearTimeout(hideUITimer);
-    hideUITimer = setTimeout(() => {
-        document.body.classList.add('hide-ui');
-    }, HIDE_DELAY);
-}
-
-function hideUI() {
-    clearTimeout(hideUITimer);
-    document.body.classList.add('hide-ui');
-}
-
-// Track mouse movement
-document.addEventListener('mousemove', showUI);
-document.addEventListener('mousedown', showUI);
-document.addEventListener('keydown', showUI);
-
-// Start the timer immediately
-showUI();
