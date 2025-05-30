@@ -1,0 +1,163 @@
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.canvas-area {
+    flex: 1;
+    display: flex;
+    position: relative;
+}
+
+.split-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.split-container > div {
+    transition: flex 0.1s ease-out;
+}
+
+.dragging .split-container > div {
+    transition: none;
+}
+
+.split-horizontal {
+    flex-direction: row;
+}
+
+.split-vertical {
+    flex-direction: column;
+}
+
+.canvas-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 2px solid #333;
+    transition: border-color 0.2s ease;
+    min-width: 50px;
+    min-height: 50px;
+}
+
+.canvas-panel:hover {
+    border-color: #555;
+}
+
+.canvas-controls {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.canvas-panel:hover .canvas-controls {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.control-btn {
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 122, 204, 0.9);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.control-btn:hover {
+    background: rgba(0, 122, 204, 1);
+    transform: scale(1.1);
+}
+
+.control-btn.remove {
+    background: rgba(220, 53, 69, 0.9);
+}
+
+.control-btn.remove:hover {
+    background: rgba(220, 53, 69, 1);
+}
+
+.canvas-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.divider {
+    background: #444;
+    position: relative;
+    z-index: 10;
+    transition: background-color 0.2s;
+}
+
+.divider:hover {
+    background: #666;
+}
+
+.divider.dragging {
+    background: #007acc;
+    user-select: none;
+}
+
+body.dragging {
+    user-select: none;
+    cursor: col-resize;
+}
+
+body.dragging-vertical {
+    cursor: row-resize;
+}
+
+body.hide-ui {
+    cursor: none;
+}
+
+body.hide-ui .canvas-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.hide-ui .canvas-panel:hover {
+    border-color: #333;
+}
+
+.horizontal-divider {
+    width: 4px;
+    cursor: col-resize;
+}
+
+.vertical-divider {
+    height: 4px;
+    cursor: row-resize;
+}
+
+.info {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    font-size: 12px;
+    color: #aaa;
+    max-width: 300px;
+}
