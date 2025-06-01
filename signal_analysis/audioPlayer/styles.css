@@ -1,0 +1,72 @@
+/* Container for the entire player */
+.music-player-container {
+  font-family: sans-serif;
+}
+
+/* Hide default file‐input styling */
+.music-player-file-input {
+  margin-bottom: 8px;
+}
+
+/* Controls (Play/Pause + Stop) */
+.music-player-controls {
+  margin-top: 8px;
+}
+
+.music-player-btn {
+  background: #222;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.music-player-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.music-player-btn + .music-player-btn {
+  margin-left: 4px;
+}
+
+/* Scrub slider */
+.music-player-slider {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Time display (current / total) */
+.music-player-time-display {
+  text-align: right;
+  font-family: monospace;
+  margin-top: 4px;
+}
+
+/* Volume container */
+.music-player-volume-container {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.music-player-volume-label {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.music-player-volume-slider {
+  flex: 1;
+}
+
+/* Details panel */
+.music-player-details {
+  margin-top: 8px;
+  padding: 8px;
+  font-family: Menlo, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  border-radius: 4px;
+}

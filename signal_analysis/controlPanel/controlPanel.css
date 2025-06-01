@@ -1,0 +1,159 @@
+/* Container for the hidden tab trigger */
+.tab-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+}
+
+/* The visible “tab” that remains on the left edge */
+.tab {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 120px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    border-radius: 0 0 15px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    text-align: center;
+    line-height: 1.2;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.tab:hover {
+    opacity: 1;
+    transform: translateX(5px);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.tab.active {
+    opacity: 1;
+}
+
+/* The sliding panel itself */
+.tab-content {
+    position: fixed;
+    left: -350px;                      /* Hidden off-screen by default */
+    top: 0;
+    width: 350px;
+    height: 100vh;
+    background: #000;                  /* Changed to black */
+    border-radius: 0 0 20px 0;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
+    transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    padding: 30px;
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.tab-content.open {
+    left: 0;                           /* Slides into view */
+}
+
+/* Headings inside the panel */
+.tab-content h2 {
+    color: #fff;                       /* Changed to white */
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Paragraphs directly inside the panel */
+.tab-content p {
+    color: #ccc;                       /* Light gray for readability */
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+/* Each collapsible section wrapper */
+.tab-content details {
+    margin-bottom: 15px;
+    border: 1px solid #444;           /* Darker border */
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* The clickable summary (header) for each section */
+.tab-content summary {
+    background: #222;                  /* Dark gray */
+    padding: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #fff;                       /* White text */
+    border-bottom: 1px solid #444;     /* Darker separator */
+    transition: background-color 0.2s ease;
+}
+
+.tab-content summary:hover {
+    background: #333;                  /* Lighten slightly on hover */
+}
+
+.tab-content details[open] summary {
+    background: #444;                  /* Even lighter when open */
+}
+
+/* The content inside an expanded section */
+.tab-content details .content {
+    padding: 15px;
+    background: #000;                  /* Match panel background */
+    color: #ccc;                       /* Light gray text */
+}
+
+/* Close button (“×”) in the top-right of the panel */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #ccc;                       /* Light gray */
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.close-btn:hover {
+    color: #fff;
+    background: #333;                  /* Dark hover background */
+}
+
+/* Semi-transparent overlay behind the panel (if used) */
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Main page content area (pushes right when panel is open) */
+.main-content {
+    padding: 50px;
+    text-align: center;
+    color: white;                      /* Assumes dark background behind main content */
+    margin-left: 60px;                 /* Give room for the collapsed tab */
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.shift {
+    margin-left: 350px;                /* Shift over when panel opens */
+}
+
+.main-content h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.main-content p {
+    font-size: 18px;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}

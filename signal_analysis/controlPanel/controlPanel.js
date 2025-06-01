@@ -1,7 +1,7 @@
 // controlPanel.js
 export class ControlPanel {
     constructor(options = {}) {
-        this.cssPath = options.cssPath || 'control_panel/control_panel.css';
+        this.cssPath = options.cssPath || 'controlPanel/controlPanel.css';
         this.isOpen = false;
         this.init();
     }
@@ -42,31 +42,8 @@ export class ControlPanel {
         this.tabContent.appendChild(this.closeBtn);
 
         // Heading and intro
-        this.tabContent.appendChild(this.createTextEl('h2', 'Settings Panel'));
-        this.tabContent.appendChild(this.createTextEl('p', 'This is a sliding tab panel that demonstrates smooth animations and user interactions.'));
-
-        // Details sections
-        this.tabContent.appendChild(this.createDetails('Panel Features', [
-            'The tab becomes visible when you hover over it, and this panel slides out smoothly when clicked.',
-            'You can close this panel by clicking the X button, clicking outside the panel, or pressing the Escape key.'
-        ]));
-
-        this.tabContent.appendChild(this.createDetails('Design Elements', [
-            'The design uses modern CSS techniques including gradients, shadows, and smooth transitions to create an engaging user experience.',
-            'Features include responsive design, accessibility support, and smooth animations.'
-        ]));
-
-        this.tabContent.appendChild(this.createDetails('Technical Details', [
-            'Built with vanilla HTML, CSS, and JavaScript for optimal performance.',
-            'Uses CSS Grid and Flexbox for layout, and CSS transitions for animations.',
-            'Keyboard navigation support included for accessibility.'
-        ]));
-
-        // Main content (demo only, not necessarily part of the module)
-        /*const mainContent = this.createEl('div', 'main-content');
-        mainContent.appendChild(this.createTextEl('h1', 'Sliding Tab Demo'));
-        mainContent.appendChild(this.createTextEl('p', 'Hover over the tab on the left to see it appear, then click it to reveal the sliding panel. Click anywhere outside the panel to close it.'));
-        document.body.appendChild(mainContent);*/
+        this.tabContent.appendChild(this.createTextEl('h2', 'Settings'));
+        this.tabContent.appendChild(this.createTextEl('p', 'Create Audio Sources and add Signal Processors Here.'));
     }
 
     attachEvents() {
@@ -97,19 +74,16 @@ export class ControlPanel {
         });
     }
 
-    createDetails(summaryText, paragraphTexts) {
+    createDetails(summaryText) {
         const details = document.createElement('details');
         const summary = document.createElement('summary');
         summary.textContent = summaryText;
         details.appendChild(summary);
 
         const contentDiv = this.createEl('div', 'content');
-        paragraphTexts.forEach(text => {
-            contentDiv.appendChild(this.createTextEl('p', text));
-        });
 
         details.appendChild(contentDiv);
-        return details;
+        return [details, contentDiv];
     }
 
     createEl(tag, className = '', id = '', text = '') {
