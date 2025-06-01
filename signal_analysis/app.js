@@ -4,13 +4,13 @@ import { AudioSamplePuller, MusicPlayer } from './audioPlayer/audioPlayer.js';
 
 // TODO:
 // make favicon with https://favicon.io/favicon-converter/
-// register file input
+// handle canvas registration
 
 // make array for input registration
 const chunk_audio_inputs = [];
-const stream_audio_input = [];
+const stream_audio_input = []; // has a pullAllSamples() function
 
-// make array of inputs
+// make array of availible plugins
 const plugins = [];
 
 // import control panel
@@ -28,4 +28,5 @@ const audioPlayer = new MusicPlayer(
   audioContent,
   './audioplayer/SampleProcessor.js'
 );
-
+// register audioplayer as streamable input
+stream_audio_input.push(audioPlayer);
