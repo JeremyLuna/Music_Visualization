@@ -1,23 +1,26 @@
 // dynamicCanvas.js
+
 export class DynamicCanvas {
     constructor(options = {}) {
         this.cssPath = options.cssPath || 'dynamic_canvas/dynamic_canvas.css';
         this.layoutTree = {
             id: 'root',
             type: 'canvas',
-            color: this.getRandomColor()
+            color: this.getRandomColor(),
+            // no children yet
         };
         this.dragState = null;
         this.hideUITimer = null;
         this.HIDE_DELAY = 2500;
+
         this.init();
     }
 
     init() {
         this.loadStyles();
         this.createDOM();
+        this.bindUIAutohide();
         this.render();
-        this.setupUIAutoHide();
     }
 
     loadStyles() {
@@ -28,10 +31,284 @@ export class DynamicCanvas {
     }
 
     createDOM() {
-        this.container = this.createEl('div', 'container');
-        this.canvasArea = this.createEl('div', 'canvas-area', 'canvasArea');
+        // Main container
+        this.container = this.createEl('div', 'dc-container');
+        // Area where panels (canvases or splits) get rendered
+        this.canvasArea = this.createEl('div', 'dc-canvas-area');
         this.container.appendChild(this.canvasArea);
         document.body.appendChild(this.container);
+    }
+
+    bindUIAutohide() {
+        const showUI = () => {
+            document.body.classList.remove('hide-ui');
+            clearTimeout(this.hideUITimer);
+            this.hideUITimer = setTimeout(() => {
+                document.body.classList.add('hide-ui');
+            }, this.HIDE_DELAY);
+        };
+        document.addEventListener('mousemove', showUI);
+        document.addEventListener('mousedown', showUI);
+        document.addEventListener('keydown', showUI);
+        showUI(); // initial kick-off
+    }
+
+    render() {
+        // Clear previous contents
+        this.canvasArea.innerHTML = '';
+        // Recursively render starting from root
+        this.renderNode(this.layoutTree, this.canvasArea);
+    }
+
+    renderNode(node, container) {
+        if (node.type === 'canvas') {
+            // Leaf: render a single canvas panel
+            const panel = this.createEl('div', 'canvas-panel');
+            panel.style.flex = '1';
+            panel.dataset.id = node.id;
+
+            // CONTENT DIV that will now hold an actual <canvas>
+            const content = this.createEl('div', 'canvas-content');
+            content.style.position = 'relative';
+            content.style.backgroundColor = node.color;
+            content.dataset.id = node.id;
+
+            // Create actual HTMLCanvasElement inside content
+            const canvasEl = this.createEl('canvas', 'embedded-canvas');
+            // Make it fill the parent
+            canvasEl.style.position = 'absolute';
+            canvasEl.style.top = '0';
+            canvasEl.style.left = '0';
+            canvasEl.style.width = '100%';
+            canvasEl.style.height = '100%';
+            canvasEl.width = content.clientWidth;
+            canvasEl.height = content.clientHeight;
+
+            content.appendChild(canvasEl);
+            panel.appendChild(content);
+
+            // CONTROLS (split/remove buttons)
+            const controls = this.createEl('div', 'canvas-controls');
+            // Split horizontally
+            const splitHBtn = this.createEl('button', 'control-btn');
+            splitHBtn.innerHTML = '⇔';
+            splitHBtn.title = 'Split horizontally';
+            splitHBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.splitCanvas(node.id, 'horizontal');
+            };
+            // Split vertically
+            const splitVBtn = this.createEl('button', 'control-btn');
+            splitVBtn.innerHTML = '⇕';
+            splitVBtn.title = 'Split vertically';
+            splitVBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.splitCanvas(node.id, 'vertical');
+            };
+            // Remove canvas (only if not root)
+            const removeBtn = this.createEl('button', 'control-btn');
+            removeBtn.innerHTML = '✕';
+            removeBtn.title = 'Remove this canvas';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.removeCanvas(node.id);
+            };
+
+            controls.appendChild(splitHBtn);
+            controls.appendChild(splitVBtn);
+            if (node.id !== this.layoutTree.id) {
+                controls.appendChild(removeBtn);
+            }
+            panel.appendChild(controls);
+
+            // Attach a ResizeObserver to keep canvas size in sync
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const cr = entry.contentRect;
+                    canvasEl.width = Math.floor(cr.width);
+                    canvasEl.height = Math.floor(cr.height);
+                    // Redraw if desired; here we'll clear to background
+                    const ctx = canvasEl.getContext('2d');
+                    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+                    // (Optionally draw something to indicate canvas is active)
+                    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                    ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+                }
+            });
+            resizeObserver.observe(content);
+
+            container.appendChild(panel);
+        } else if (node.type === 'split') {
+            // Internal node: render two children with a splitter between
+            const splitContainer = this.createEl('div', 'split-container');
+            splitContainer.dataset.id = node.id;
+            splitContainer.style.display = 'flex';
+            splitContainer.style.flex = '1';
+            splitContainer.style.position = 'relative';
+
+            if (node.direction === 'horizontal') {
+                splitContainer.style.flexDirection = 'row';
+            } else {
+                splitContainer.style.flexDirection = 'column';
+            }
+
+            // First child panel/container
+            const childA = this.createEl('div', 'split-child');
+            childA.style.flex = node.sizes[0] / 100;
+            this.renderNode(node.children[0], childA);
+
+            // Second child panel/container
+            const childB = this.createEl('div', 'split-child');
+            childB.style.flex = node.sizes[1] / 100;
+            this.renderNode(node.children[1], childB);
+
+            // Splitter bar
+            const splitter = this.createEl('div', 'splitter');
+            splitter.style.position = 'absolute';
+            splitter.style.background = 'rgba(0,0,0,0.2)';
+            splitter.style.zIndex = '10';
+            if (node.direction === 'horizontal') {
+                splitter.style.cursor = 'col-resize';
+                splitter.style.width = '5px';
+                splitter.style.top = '0';
+                splitter.style.bottom = '0';
+                splitter.style.left = `calc(${node.sizes[0]}% - 2.5px)`;
+            } else {
+                splitter.style.cursor = 'row-resize';
+                splitter.style.height = '5px';
+                splitter.style.left = '0';
+                splitter.style.right = '0';
+                splitter.style.top = `calc(${node.sizes[0]}% - 2.5px)`;
+            }
+
+            // Mouse events for dragging
+            splitter.onmousedown = (e) => {
+                e.preventDefault();
+                this.dragState = {
+                    node,
+                    startPos: node.direction === 'horizontal' ? e.clientX : e.clientY,
+                    startSizes: [...node.sizes],
+                    splitContainer,
+                    index: 0 // always split between child 0 and 1
+                };
+                document.body.classList.add('dragging');
+                if (node.direction === 'vertical') {
+                    document.body.classList.add('dragging-vertical');
+                }
+                document.addEventListener('mousemove', this.onDrag);
+                document.addEventListener('mouseup', this.onDragEnd);
+            };
+
+            splitContainer.appendChild(childA);
+            splitContainer.appendChild(childB);
+            splitContainer.appendChild(splitter);
+            container.appendChild(splitContainer);
+        }
+    }
+
+    onDrag = (e) => {
+        const { node, startPos, startSizes, splitContainer, index } = this.dragState;
+        const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
+        const delta = currentPos - startPos;
+        const totalSize = node.direction === 'horizontal'
+            ? splitContainer.clientWidth
+            : splitContainer.clientHeight;
+        const deltaPercent = (delta / totalSize) * 100;
+
+        // Update sizes, clamped between 5% and 95%
+        const newSizeA = Math.max(5, Math.min(95, startSizes[0] + deltaPercent));
+        const newSizeB = Math.max(5, Math.min(95, startSizes[1] - deltaPercent));
+        node.sizes[0] = newSizeA;
+        node.sizes[1] = newSizeB;
+
+        // Re-render to update splitter position and children sizes
+        this.render();
+    };
+
+    onDragEnd = (e) => {
+        document.body.classList.remove('dragging', 'dragging-vertical');
+        document.removeEventListener('mousemove', this.onDrag);
+        document.removeEventListener('mouseup', this.onDragEnd);
+        this.dragState = null;
+    };
+
+    splitCanvas(canvasId, direction) {
+        // Find the node to split
+        const node = this.findNodeById(this.layoutTree, canvasId);
+        if (!node || node.type !== 'canvas') return;
+
+        // Create a new leaf
+        const newLeaf = {
+            id: this.generateId(),
+            type: 'canvas',
+            color: this.getRandomColor()
+        };
+        // Replace the canvas node with a split node
+        const newContainer = {
+            id: this.generateId(),
+            type: 'split',
+            direction,
+            sizes: [50, 50],
+            children: [
+                { ...node, id: node.id }, // keep same id for first child
+                newLeaf
+            ]
+        };
+
+        if (node.id === this.layoutTree.id) {
+            // Replacing root
+            this.layoutTree = newContainer;
+        } else {
+            const parent = this.findParentById(this.layoutTree, canvasId);
+            if (!parent) return;
+            const idx = parent.children.findIndex(c => c.id === canvasId);
+            parent.children[idx] = newContainer;
+        }
+        this.render();
+    }
+
+    removeCanvas(canvasId) {
+        // Cannot remove root if it's the only canvas
+        if (canvasId === this.layoutTree.id && this.layoutTree.type === 'canvas') return;
+
+        const parent = this.findParentById(this.layoutTree, canvasId);
+        if (!parent) return;
+        const idx = parent.children.findIndex(c => c.id === canvasId);
+        if (idx === -1) return;
+
+        // The sibling becomes the replacement for the parent split
+        const sibling = parent.children[1 - idx];
+        if (parent.id === this.layoutTree.id) {
+            this.layoutTree = sibling;
+        } else {
+            const grandParent = this.findParentById(this.layoutTree, parent.id);
+            if (!grandParent) return;
+            const parentIdx = grandParent.children.findIndex(c => c.id === parent.id);
+            grandParent.children[parentIdx] = sibling;
+        }
+        this.render();
+    }
+
+    findNodeById(tree, id) {
+        if (tree.id === id) return tree;
+        if (tree.type === 'split') {
+            for (let child of tree.children) {
+                const found = this.findNodeById(child, id);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    findParentById(tree, id, parent = null) {
+        if (tree.id === id) return parent;
+        if (tree.type === 'split') {
+            for (let child of tree.children) {
+                const found = this.findParentById(child, id, tree);
+                if (found) return found;
+            }
+        }
+        return null;
     }
 
     getRandomColor() {
@@ -47,233 +324,9 @@ export class DynamicCanvas {
         return 'canvas_' + Math.random().toString(36).substr(2, 9);
     }
 
-    findNodeById(tree, id) {
-        if (tree.id === id) return tree;
-        if (tree.children) {
-            for (const child of tree.children) {
-                const result = this.findNodeById(child, id);
-                if (result) return result;
-            }
-        }
-        return null;
-    }
-
-    findParentById(tree, id) {
-        if (tree.children) {
-            for (const child of tree.children) {
-                if (child.id === id) return tree;
-                const result = this.findParentById(child, id);
-                if (result) return result;
-            }
-        }
-        return null;
-    }
-
-    splitCanvas(canvasId, direction) {
-        const node = this.findNodeById(this.layoutTree, canvasId);
-        if (!node || node.type !== 'canvas') return;
-
-        const newCanvas = {
-            id: this.generateId(),
-            type: 'canvas',
-            color: this.getRandomColor()
-        };
-
-        const newContainer = {
-            id: this.generateId(),
-            type: 'split',
-            direction,
-            children: [
-                { ...node, id: this.generateId() },
-                newCanvas
-            ],
-            sizes: [50, 50]
-        };
-
-        if (node.id === this.layoutTree.id) {
-            this.layoutTree = newContainer;
-        } else {
-            const parent = this.findParentById(this.layoutTree, canvasId);
-            if (!parent) return;
-            const index = parent.children.findIndex(child => child.id === canvasId);
-            if (index === -1) return;
-            parent.children[index] = newContainer;
-        }
-
-        this.render();
-    }
-
-    splitHorizontal(id) {
-        this.splitCanvas(id, 'horizontal');
-    }
-
-    splitVertical(id) {
-        this.splitCanvas(id, 'vertical');
-    }
-
-    removeCanvas(id) {
-        if (id === this.layoutTree.id && this.layoutTree.type === 'canvas') return;
-
-        const parent = this.findParentById(this.layoutTree, id);
-        if (!parent || !parent.children) return;
-
-        const index = parent.children.findIndex(child => child.id === id);
-        if (index === -1) return;
-
-        parent.children.splice(index, 1);
-
-        if (parent.children.length === 1) {
-            const remaining = parent.children[0];
-            const grandParent = this.findParentById(this.layoutTree, parent.id);
-
-            if (!grandParent) {
-                this.layoutTree = remaining;
-            } else {
-                const parentIndex = grandParent.children.findIndex(child => child.id === parent.id);
-                grandParent.children[parentIndex] = remaining;
-            }
-        }
-
-        this.render();
-    }
-
-    render() {
-        this.canvasArea.innerHTML = '';
-        this.renderNode(this.layoutTree, this.canvasArea);
-    }
-
-    renderNode(node, container) {
-        if (node.type === 'canvas') {
-            const panel = this.createEl('div', 'canvas-panel');
-            panel.style.flex = '1';
-
-            const content = this.createEl('div', 'canvas-content');
-            content.style.backgroundColor = node.color;
-            content.textContent = `Canvas ${node.id.split('_')[1] || 'Root'}`;
-
-            const controls = this.createEl('div', 'canvas-controls');
-
-            const btn = (label, title, handler) => {
-                const b = this.createEl('button', 'control-btn');
-                b.innerHTML = label;
-                b.title = title;
-                b.onclick = (e) => {
-                    e.stopPropagation();
-                    handler();
-                };
-                return b;
-            };
-
-            controls.appendChild(btn('→', 'Split horizontally', () => this.splitHorizontal(node.id)));
-            controls.appendChild(btn('↓', 'Split vertically', () => this.splitVertical(node.id)));
-
-            if (!(node.id === this.layoutTree.id && this.layoutTree.type === 'canvas')) {
-                const rm = btn('✕', 'Remove canvas', () => this.removeCanvas(node.id));
-                rm.classList.add('remove');
-                controls.appendChild(rm);
-            }
-
-            panel.appendChild(content);
-            panel.appendChild(controls);
-            container.appendChild(panel);
-
-        } else if (node.type === 'split') {
-            const splitContainer = this.createEl('div', `split-container split-${node.direction}`);
-            splitContainer.style.flex = '1';
-
-            node.children.forEach((child, i) => {
-                const childContainer = this.createEl('div');
-                childContainer.style.flex = `${node.sizes[i] || 50}`;
-                childContainer.style.display = 'flex';
-
-                this.renderNode(child, childContainer);
-                splitContainer.appendChild(childContainer);
-
-                if (i < node.children.length - 1) {
-                    const divider = this.createEl('div', `divider ${node.direction}-divider`);
-                    this.setupDividerDragging(divider, node, i, splitContainer);
-                    splitContainer.appendChild(divider);
-                }
-            });
-
-            container.appendChild(splitContainer);
-        }
-    }
-
-    setupDividerDragging(divider, node, i, splitContainer) {
-        let startPos, startSizes;
-        divider.onmousedown = (e) => {
-            e.preventDefault();
-            divider.classList.add('dragging');
-            document.body.classList.add('dragging');
-            if (node.direction === 'vertical') {
-                document.body.classList.add('dragging-vertical');
-            }
-
-            startPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
-            startSizes = [...node.sizes];
-            const leftChild = splitContainer.children[i * 2];
-            const rightChild = splitContainer.children[(i + 1) * 2];
-
-            const onMouseMove = (e) => {
-                requestAnimationFrame(() => {
-                    const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
-                    const delta = currentPos - startPos;
-                    const containerSize = node.direction === 'horizontal'
-                        ? splitContainer.offsetWidth : splitContainer.offsetHeight;
-                    const deltaPercent = (delta / containerSize) * 100;
-
-                    const newSize1 = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
-                    const newSize2 = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
-
-                    leftChild.style.flex = newSize1;
-                    rightChild.style.flex = newSize2;
-                });
-            };
-
-            const onMouseUp = (e) => {
-                divider.classList.remove('dragging');
-                document.body.classList.remove('dragging', 'dragging-vertical');
-
-                const currentPos = node.direction === 'horizontal'
-                    ? (e?.clientX || startPos) : (e?.clientY || startPos);
-                const delta = currentPos - startPos;
-                const containerSize = node.direction === 'horizontal'
-                    ? splitContainer.offsetWidth : splitContainer.offsetHeight;
-                const deltaPercent = (delta / containerSize) * 100;
-
-                node.sizes[i] = Math.max(5, Math.min(95, startSizes[i] + deltaPercent));
-                node.sizes[i + 1] = Math.max(5, Math.min(95, startSizes[i + 1] - deltaPercent));
-
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-            };
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        };
-    }
-
-    createEl(tag, className = '', id = '') {
+    createEl(tag, className) {
         const el = document.createElement(tag);
-        if (className) el.className = className;
-        if (id) el.id = id;
+        if (className) el.classList.add(className);
         return el;
-    }
-
-    setupUIAutoHide() {
-        const showUI = () => {
-            document.body.classList.remove('hide-ui');
-            clearTimeout(this.hideUITimer);
-            this.hideUITimer = setTimeout(() => {
-                document.body.classList.add('hide-ui');
-            }, this.HIDE_DELAY);
-        };
-
-        document.addEventListener('mousemove', showUI);
-        document.addEventListener('mousedown', showUI);
-        document.addEventListener('keydown', showUI);
-
-        showUI(); // initial kick-off
     }
 }
