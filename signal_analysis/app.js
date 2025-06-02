@@ -5,7 +5,9 @@ import { STFTVisualizer } from './STFTVisualizer/STFTVisualizer.js';
 
 // TODO:
 // make favicon with https://favicon.io/favicon-converter/
+// don't rebuild canvases
 // handle canvas registration
+// dont think we need canvas-content class, it only holds a canvas
 
 // make array for input registration
 const chunk_audio_inputs = [];
