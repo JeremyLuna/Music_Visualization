@@ -207,22 +207,49 @@ export class DynamicCanvas {
     }
 
     onDrag = (e) => {
-        const { node, startPos, startSizes, splitContainer, index } = this.dragState;
+        const { node, startPos, startSizes, splitContainer } = this.dragState;
+        // Determine current mouse position along the split axis:
         const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
         const delta = currentPos - startPos;
+
+        // Measure the container’s current pixel size:
         const totalSize = node.direction === 'horizontal'
             ? splitContainer.clientWidth
             : splitContainer.clientHeight;
+
+        // Compute how many percentage‐points we’ve moved:
         const deltaPercent = (delta / totalSize) * 100;
 
-        // Update sizes, clamped between 5% and 95%
+        // Clamp between 5% and 95% to avoid collapsing:
         const newSizeA = Math.max(5, Math.min(95, startSizes[0] + deltaPercent));
-        const newSizeB = Math.max(5, Math.min(95, startSizes[1] - deltaPercent));
+        const newSizeB = 100 - newSizeA; // keep sum = 100
+
+        // Update model state so future splits/removals are correct:
         node.sizes[0] = newSizeA;
         node.sizes[1] = newSizeB;
 
-        // Re-render to update splitter position and children sizes
-        this.render();
+        // Now update the DOM in place:
+        // Recall: in renderNode we did:
+        //   splitContainer.appendChild(childA);
+        //   splitContainer.appendChild(childB);
+        //   splitContainer.appendChild(splitter);
+        //
+        // So at indices 0 and 1 are the two “.split-child” wrappers,
+        // and at index 2 is the splitter itself.
+        const childA = splitContainer.children[0];
+        const childB = splitContainer.children[1];
+        const splitter = splitContainer.children[2];
+
+        // Adjust each side’s flex to match the new percentages:
+        childA.style.flex = String(newSizeA / 100);
+        childB.style.flex = String(newSizeB / 100);
+
+        // Move the splitter bar:
+        if (node.direction === 'horizontal') {
+            splitter.style.left = `calc(${newSizeA}% - 2.5px)`;
+        } else {
+            splitter.style.top = `calc(${newSizeA}% - 2.5px)`;
+        }
     };
 
     onDragEnd = (e) => {
