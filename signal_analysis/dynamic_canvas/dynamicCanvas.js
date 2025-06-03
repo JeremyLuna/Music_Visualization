@@ -7,6 +7,7 @@ export class DynamicCanvas {
             id: 'root',
             type: 'canvas',
             color: this.getRandomColor(),
+            canvasEl: null  // Store persistent canvas element
             // no children yet
         };
         this.dragState = null;
@@ -48,9 +49,7 @@ export class DynamicCanvas {
             }, this.HIDE_DELAY);
         };
         document.addEventListener('mousemove', showUI);
-        document.addEventListener('mousedown', showUI);
         document.addEventListener('keydown', showUI);
-        showUI(); // initial kick-off
     }
 
     render() {
@@ -73,18 +72,55 @@ export class DynamicCanvas {
             content.style.backgroundColor = node.color;
             content.dataset.id = node.id;
 
-            // Create actual HTMLCanvasElement inside content
-            const canvasEl = this.createEl('canvas', 'embedded-canvas');
+            // Get or create persistent HTMLCanvasElement
+            let canvasEl;
+            if (node.canvasEl) {
+                canvasEl = node.canvasEl;
+            } else {
+                canvasEl = this.createEl('canvas', 'embedded-canvas');
+                node.canvasEl = canvasEl;
+            }
             // Make it fill the parent
             canvasEl.style.position = 'absolute';
             canvasEl.style.top = '0';
             canvasEl.style.left = '0';
             canvasEl.style.width = '100%';
             canvasEl.style.height = '100%';
+            // Update actual pixel size
             canvasEl.width = content.clientWidth;
             canvasEl.height = content.clientHeight;
 
+            // Initialize drawing if first time
+            const ctx = canvasEl.getContext('2d');
+            if (!canvasEl._initialized) {
+                ctx.fillStyle = node.color;
+                ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+                canvasEl._initialized = true;
+            }
+
+            // Append canvas to content
             content.appendChild(canvasEl);
+
+            // Mouse events for content
+            content.onmouseenter = (e) => {
+                e.stopPropagation();
+                // Optionally draw something to indicate canvas is active
+                const ctxHover = canvasEl.getContext('2d');
+                //ctxHover.fillStyle = 'rgba(0,0,0,0.05)';
+                //ctxHover.fillRect(0, 0, canvasEl.width, canvasEl.height);
+            };
+
+            // Observe resizing to update canvas size
+            const resizeObserver = new ResizeObserver(() => {
+                canvasEl.width = content.clientWidth;
+                canvasEl.height = content.clientHeight;
+                // Optionally redraw background
+                const ctxResize = canvasEl.getContext('2d');
+                ctxResize.fillStyle = node.color;
+                ctxResize.fillRect(0, 0, canvasEl.width, canvasEl.height);
+            });
+            resizeObserver.observe(content);
+
             panel.appendChild(content);
 
             // CONTROLS (split/remove buttons)
@@ -113,29 +149,12 @@ export class DynamicCanvas {
                 e.stopPropagation();
                 this.removeCanvas(node.id);
             };
-
             controls.appendChild(splitHBtn);
             controls.appendChild(splitVBtn);
             if (node.id !== this.layoutTree.id) {
                 controls.appendChild(removeBtn);
             }
             panel.appendChild(controls);
-
-            // Attach a ResizeObserver to keep canvas size in sync
-            const resizeObserver = new ResizeObserver(entries => {
-                for (let entry of entries) {
-                    const cr = entry.contentRect;
-                    canvasEl.width = Math.floor(cr.width);
-                    canvasEl.height = Math.floor(cr.height);
-                    // Redraw if desired; here we'll clear to background
-                    const ctx = canvasEl.getContext('2d');
-                    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-                    // (Optionally draw something to indicate canvas is active)
-                    ctx.fillStyle = 'rgba(0,0,0,0.05)';
-                    ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-                }
-            });
-            resizeObserver.observe(content);
 
             container.appendChild(panel);
         } else if (node.type === 'split') {
@@ -145,40 +164,37 @@ export class DynamicCanvas {
             splitContainer.style.display = 'flex';
             splitContainer.style.flex = '1';
             splitContainer.style.position = 'relative';
-
+            // Set direction
             if (node.direction === 'horizontal') {
                 splitContainer.style.flexDirection = 'row';
             } else {
                 splitContainer.style.flexDirection = 'column';
             }
 
-            // First child panel/container
+            // Render children
             const childA = this.createEl('div', 'split-child');
-            childA.style.flex = node.sizes[0] / 100;
+            childA.style.flex = String(node.sizes[0] / 100);
             this.renderNode(node.children[0], childA);
-
-            // Second child panel/container
             const childB = this.createEl('div', 'split-child');
-            childB.style.flex = node.sizes[1] / 100;
+            childB.style.flex = String(node.sizes[1] / 100);
             this.renderNode(node.children[1], childB);
 
-            // Splitter bar
+            // Splitter element
             const splitter = this.createEl('div', 'splitter');
-            splitter.style.position = 'absolute';
-            splitter.style.background = 'rgba(0,0,0,0.2)';
-            splitter.style.zIndex = '10';
             if (node.direction === 'horizontal') {
                 splitter.style.cursor = 'col-resize';
                 splitter.style.width = '5px';
+                splitter.style.position = 'absolute';
+                splitter.style.left = `calc(${node.sizes[0]}% - 2.5px)`;
                 splitter.style.top = '0';
                 splitter.style.bottom = '0';
-                splitter.style.left = `calc(${node.sizes[0]}% - 2.5px)`;
             } else {
                 splitter.style.cursor = 'row-resize';
                 splitter.style.height = '5px';
+                splitter.style.position = 'absolute';
+                splitter.style.top = `calc(${node.sizes[0]}% - 2.5px)`;
                 splitter.style.left = '0';
                 splitter.style.right = '0';
-                splitter.style.top = `calc(${node.sizes[0]}% - 2.5px)`;
             }
 
             // Mouse events for dragging
@@ -207,44 +223,20 @@ export class DynamicCanvas {
     }
 
     onDrag = (e) => {
+        if (!this.dragState) return;
         const { node, startPos, startSizes, splitContainer } = this.dragState;
-        // Determine current mouse position along the split axis:
-        const currentPos = node.direction === 'horizontal' ? e.clientX : e.clientY;
-        const delta = currentPos - startPos;
-
-        // Measure the container’s current pixel size:
-        const totalSize = node.direction === 'horizontal'
-            ? splitContainer.clientWidth
-            : splitContainer.clientHeight;
-
-        // Compute how many percentage‐points we’ve moved:
-        const deltaPercent = (delta / totalSize) * 100;
-
-        // Clamp between 5% and 95% to avoid collapsing:
-        const newSizeA = Math.max(5, Math.min(95, startSizes[0] + deltaPercent));
-        const newSizeB = 100 - newSizeA; // keep sum = 100
-
-        // Update model state so future splits/removals are correct:
-        node.sizes[0] = newSizeA;
-        node.sizes[1] = newSizeB;
-
-        // Now update the DOM in place:
-        // Recall: in renderNode we did:
-        //   splitContainer.appendChild(childA);
-        //   splitContainer.appendChild(childB);
-        //   splitContainer.appendChild(splitter);
-        //
-        // So at indices 0 and 1 are the two “.split-child” wrappers,
-        // and at index 2 is the splitter itself.
-        const childA = splitContainer.children[0];
-        const childB = splitContainer.children[1];
-        const splitter = splitContainer.children[2];
-
+        const delta = (node.direction === 'horizontal' ? e.clientX : e.clientY) - startPos;
+        const totalSize = (node.direction === 'horizontal' ? splitContainer.clientWidth : splitContainer.clientHeight);
+        let deltaPercent = (delta / totalSize) * 100;
+        const newSizeA = startSizes[0] + deltaPercent;
+        const newSizeB = startSizes[1] - deltaPercent;
+        if (newSizeA < 5 || newSizeB < 5) return;
+        node.sizes = [newSizeA, newSizeB];
         // Adjust each side’s flex to match the new percentages:
-        childA.style.flex = String(newSizeA / 100);
-        childB.style.flex = String(newSizeB / 100);
-
+        splitContainer.children[0].style.flex = String(newSizeA / 100);
+        splitContainer.children[1].style.flex = String(newSizeB / 100);
         // Move the splitter bar:
+        const splitter = splitContainer.children[2];
         if (node.direction === 'horizontal') {
             splitter.style.left = `calc(${newSizeA}% - 2.5px)`;
         } else {
@@ -268,7 +260,8 @@ export class DynamicCanvas {
         const newLeaf = {
             id: this.generateId(),
             type: 'canvas',
-            color: this.getRandomColor()
+            color: this.getRandomColor(),
+            canvasEl: null
         };
         // Replace the canvas node with a split node
         const newContainer = {
@@ -283,12 +276,11 @@ export class DynamicCanvas {
         };
 
         if (node.id === this.layoutTree.id) {
-            // Replacing root
             this.layoutTree = newContainer;
         } else {
-            const parent = this.findParentById(this.layoutTree, canvasId);
+            const parent = this.findParentById(this.layoutTree, node.id);
             if (!parent) return;
-            const idx = parent.children.findIndex(c => c.id === canvasId);
+            const idx = parent.children.findIndex(c => c.id === node.id);
             parent.children[idx] = newContainer;
         }
         this.render();
