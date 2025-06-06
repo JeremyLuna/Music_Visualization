@@ -46,7 +46,10 @@ console.log(dynamic_canvas.layoutTree.canvasEl);
 const stftVisualizer = new STFTVisualizer(
   audioPlayer,
   dynamic_canvas.layoutTree.canvasEl,
-  STFTDetails
+  STFTContent
 );
+
+stftVisualizer._start();
+
 // register audioplayer as streamable input
 stream_audio_input.push(audioPlayer);

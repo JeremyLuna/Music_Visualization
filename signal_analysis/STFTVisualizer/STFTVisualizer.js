@@ -79,6 +79,7 @@ export class STFTVisualizer {
 
     _renderLoop() {
         if (!this._running) return;
+        this.height = this.canvas.height;
         this._processNewSamples();
         requestAnimationFrame(this._renderLoop);
     }
@@ -86,6 +87,8 @@ export class STFTVisualizer {
     _processNewSamples() {
         // 1) Pull all available samples
         const channels = this.audioSource.pullAllSamples();
+        console.log("pulling: ", channels);
+        
         if (!channels || channels.length === 0) return;
 
         // 2) Convert to mono by averaging channels for each sample
@@ -130,23 +133,25 @@ export class STFTVisualizer {
 
     _drawSpectrogramColumn(mags) {
         // Shift existing image left by 1 pixel
-        this.ctx.drawImage(this.canvas, -1, 0, this.width, this.height);
+        this.ctx.drawImage(this.canvas, 1, 0);
         // Clear rightmost column
-        this.ctx.clearRect(this.width - 1, 0, 1, this.height);
+        //this.ctx.clearRect(this.width - 1, 0, 1, this.height);
 
         // For each frequency bin, map to a y position and draw a pixel
         for (let i = 0; i < this.binCount; i++) {
             // Map bin index to y: low freqs at bottom
-            const y = this.height - 1 - Math.floor((i / this.binCount) * this.height);
+            const bin_spacing = Math.floor(i * (this.height / this.binCount));
+            const y = this.height - (i * bin_spacing);
             // Convert magnitude to dB: 20*log10(m); clamp
             let db = 20 * Math.log10(mags[i] + 1e-8);
             // Normalize: assume range [-100 dB…0 dB]
             let norm = (db + 100) / 100;
             if (norm < 0) norm = 0;
             if (norm > 1) norm = 1;
+            
             const intensity = Math.floor(norm * 255);
             this.ctx.fillStyle = `rgb(${intensity},${intensity},${intensity})`;
-            this.ctx.fillRect(this.width - 1, y, 1, Math.ceil(this.height / this.binCount));
+            this.ctx.fillRect(0, y, 1, bin_spacing);
         }
     }
 
