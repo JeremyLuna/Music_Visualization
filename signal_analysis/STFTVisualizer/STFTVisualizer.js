@@ -1,40 +1,41 @@
-// STFTVisualizer.js
+// STFTVisualizer.js - Modified for canvas scaling during resize
 
 export class STFTVisualizer {
     constructor(audioSource, canvasElement, settingsDiv) {
-        this.audioSource = audioSource; // must implement pullAllSamples(), returning [[ch1_samples...], [ch2_samples...], …]
+        this.audioSource = audioSource;
         this.canvas = canvasElement;        
         this.ctx = this.canvas.getContext('2d');
         this.settingsDiv = settingsDiv;
 
         // Default FFT settings
-        this.fftSize = 1024; // power of 2
+        this.fftSize = 1024;
         this.hopSize = this.fftSize / 2;
-        this.sampleBuffer = []; // mono buffer
+        this.sampleBuffer = [];
 
-        // Initialize window function (Hann)
-        this._makeWindow();
-
-        // Prepare a frequency bin count and canvas dimensions
-        this.binCount = this.fftSize / 2;
+        // Track canvas dimensions for resize detection
+        this.lastWidth = this.canvas.width;
+        this.lastHeight = this.canvas.height;
         this.width = this.canvas.width;
         this.height = this.canvas.height;
 
-        // Create <select> for fftSize options
-        this._createSettingsUI();
+        // Create backup canvas for resize scaling
+        this.backupCanvas = document.createElement('canvas');
+        this.backupCtx = this.backupCanvas.getContext('2d');
 
-        // Start rendering loop
+        // Initialize window function (Hann)
+        this._makeWindow();
+        this.binCount = this.fftSize / 2;
+
+        this._createSettingsUI();
         this._running = false;
         this._renderLoop = this._renderLoop.bind(this);
     }
 
     _createSettingsUI() {
-        // Label
         const label = document.createElement('label');
         label.textContent = 'FFT Size: ';
         label.style.marginRight = '8px';
 
-        // <select> with common sizes
         const select = document.createElement('select');
         [256, 512, 1024, 2048, 4096].forEach((size) => {
             const opt = document.createElement('option');
@@ -50,8 +51,7 @@ export class STFTVisualizer {
             this.hopSize = this.fftSize / 2;
             this.binCount = this.fftSize / 2;
             this._makeWindow();
-            this.sampleBuffer = []; // flush buffer
-            // Clear canvas when size changes
+            this.sampleBuffer = [];
             this.ctx.clearRect(0, 0, this.width, this.height);
         });
 
@@ -60,7 +60,6 @@ export class STFTVisualizer {
     }
 
     _makeWindow() {
-        // Hann window of length fftSize
         this.window = new Float32Array(this.fftSize);
         for (let n = 0; n < this.fftSize; n++) {
             this.window[n] = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (this.fftSize - 1)));
@@ -79,16 +78,91 @@ export class STFTVisualizer {
 
     _renderLoop() {
         if (!this._running) return;
+        
+        // Check for canvas resize and handle scaling
+        this._handleCanvasResize();
+        
         this._processNewSamples();
         requestAnimationFrame(this._renderLoop);
     }
 
+    _handleCanvasResize() {
+        const currentWidth = this.canvas.width;
+        const currentHeight = this.canvas.height;
+        
+        // Check if canvas size changed
+        if (currentWidth !== this.lastWidth || currentHeight !== this.lastHeight) {
+            console.log(`Canvas resized from ${this.lastWidth}x${this.lastHeight} to ${currentWidth}x${currentHeight}`);
+            
+            // Only try to scale if:
+            // 1. We have valid backup content (width > 0 AND height > 0)
+            // 2. The new canvas has valid dimensions (width > 0 AND height > 0)
+            // 3. We're not going from 0x0 to something (initial setup)
+            const hasValidBackup = this.backupCanvas.width > 0 && this.backupCanvas.height > 0;
+            const hasValidDestination = currentWidth > 0 && currentHeight > 0;
+            const notInitialSetup = this.lastWidth > 0 && this.lastHeight > 0;
+            
+            if (hasValidBackup && hasValidDestination && notInitialSetup) {
+                try {
+                    // Clear the main canvas and scale the backup to new size
+                    this.ctx.clearRect(0, 0, currentWidth, currentHeight);
+                    
+                    // Scale and draw the backup canvas to the new size
+                    this.ctx.drawImage(
+                        this.backupCanvas,
+                        0, 0, this.backupCanvas.width, this.backupCanvas.height,  // source
+                        0, 0, currentWidth, currentHeight                         // destination
+                    );
+                    
+                    console.log('Scaled spectrogram to new canvas size');
+                } catch (e) {
+                    console.log('Could not scale canvas content:', e);
+                }
+            } else {
+                console.log('Skipping scale - invalid dimensions or initial setup');
+            }
+            
+            // Update stored dimensions
+            this.lastWidth = currentWidth;
+            this.lastHeight = currentHeight;
+            this.width = currentWidth;
+            this.height = currentHeight;
+            
+            // Update backup canvas size to match (only if destination is valid)
+            if (currentWidth > 0 && currentHeight > 0) {
+                this._updateBackupCanvas();
+            }
+        }
+    }
+
+    _updateBackupCanvas() {
+        // Only update backup if we have valid dimensions
+        if (this.width <= 0 || this.height <= 0) {
+            console.log('Skipping backup update - invalid canvas dimensions');
+            return;
+        }
+        
+        // Keep backup canvas in sync with main canvas
+        if (this.backupCanvas.width !== this.width || this.backupCanvas.height !== this.height) {
+            this.backupCanvas.width = this.width;
+            this.backupCanvas.height = this.height;
+        }
+        
+        // Copy current main canvas to backup
+        try {
+            this.backupCtx.clearRect(0, 0, this.width, this.height);
+            this.backupCtx.drawImage(this.canvas, 0, 0);
+        } catch (e) {
+            console.log('Could not update backup canvas:', e);
+        }
+    }
+
     _processNewSamples() {
-        // 1) Pull all available samples
         const channels = this.audioSource.pullAllSamples();
+        
         if (!channels || channels.length === 0) return;
 
-        // 2) Convert to mono by averaging channels for each sample
+        // Convert to mono
         const numChannels = channels.length;
         const numSamples = channels[0].length;
         for (let i = 0; i < numSamples; i++) {
@@ -99,12 +173,14 @@ export class STFTVisualizer {
             this.sampleBuffer.push(sum / numChannels);
         }
 
-        // 3) While enough samples for one FFT frame
+        // Process FFT frames
         while (this.sampleBuffer.length >= this.fftSize) {
+            console.log("proc fft");
+            
             const frame = this.sampleBuffer.slice(0, this.fftSize);
             this.sampleBuffer = this.sampleBuffer.slice(this.hopSize);
 
-            // 4) Apply window
+            // Apply window
             const re = new Float32Array(this.fftSize);
             const im = new Float32Array(this.fftSize);
             for (let i = 0; i < this.fftSize; i++) {
@@ -112,10 +188,10 @@ export class STFTVisualizer {
                 im[i] = 0;
             }
 
-            // 5) Perform in-place FFT
+            // Perform FFT
             this._fft(re, im);
 
-            // 6) Compute magnitude spectrum (bins 0…binCount-1)
+            // Compute magnitude spectrum
             const mags = new Float32Array(this.binCount);
             for (let i = 0; i < this.binCount; i++) {
                 const real = re[i];
@@ -123,34 +199,44 @@ export class STFTVisualizer {
                 mags[i] = Math.sqrt(real * real + imag * imag);
             }
 
-            // 7) Draw this spectrum slice to canvas (spectrogram)
+            // Draw spectrogram column
             this._drawSpectrogramColumn(mags);
         }
+        
+        // Update backup canvas after drawing
+        this._updateBackupCanvas();
     }
 
     _drawSpectrogramColumn(mags) {
         // Shift existing image left by 1 pixel
-        this.ctx.drawImage(this.canvas, -1, 0, this.width, this.height);
-        // Clear rightmost column
-        this.ctx.clearRect(this.width - 1, 0, 1, this.height);
+        console.log("draw proc");
+        
+        try {
+            this.ctx.drawImage(this.canvas, 1, 0);
+        } catch (e) {
+            // Canvas might be empty - continue without shifting
+            console.log('Canvas empty during shift, continuing...');
+        }
 
-        // For each frequency bin, map to a y position and draw a pixel
+        // Draw new column on the right
         for (let i = 0; i < this.binCount; i++) {
-            // Map bin index to y: low freqs at bottom
-            const y = this.height - 1 - Math.floor((i / this.binCount) * this.height);
-            // Convert magnitude to dB: 20*log10(m); clamp
+            const bin_spacing = Math.floor(this.height / this.binCount);
+            const y = this.height - (i * this.height / this.binCount);
+            
             let db = 20 * Math.log10(mags[i] + 1e-8);
-            // Normalize: assume range [-100 dB…0 dB]
             let norm = (db + 100) / 100;
             if (norm < 0) norm = 0;
             if (norm > 1) norm = 1;
+            
             const intensity = Math.floor(norm * 255);
             this.ctx.fillStyle = `rgb(${intensity},${intensity},${intensity})`;
-            this.ctx.fillRect(this.width - 1, y, 1, Math.ceil(this.height / this.binCount));
+            console.log("coords", this.width - 1, y, 1, bin_spacing);
+            
+            this.ctx.fillRect(0, y, 1, bin_spacing);
+            
         }
     }
 
-    // Iterative in-place radix-2 Cooley–Tuk FFT
     _fft(re, im) {
         const n = re.length;
         const levels = Math.log2(n);
@@ -158,7 +244,7 @@ export class STFTVisualizer {
             throw new Error('FFT size must be power of 2');
         }
 
-        // Bit-reversed addressing permutation
+        // Bit-reversed addressing
         for (let i = 0; i < n; i++) {
             let j = 0;
             for (let k = 0; k < levels; k++) {
@@ -170,7 +256,7 @@ export class STFTVisualizer {
             }
         }
 
-        // Cooley–Tuk
+        // Cooley-Tukey FFT
         for (let size = 2; size <= n; size <<= 1) {
             const halfSize = size >> 1;
             const tableStep = n / size;
@@ -190,12 +276,10 @@ export class STFTVisualizer {
         }
     }
 
-    // Public API to start visualization
     start() {
         this._start();
     }
 
-    // Public API to stop visualization
     stop() {
         this._stop();
     }

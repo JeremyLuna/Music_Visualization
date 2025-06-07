@@ -41,10 +41,15 @@ const [STFTDetails, STFTContent] = control_panel.createDetails("STFT");
 // put them on the panel
 control_panel.tabContent.appendChild(STFTDetails);
 // put the file player in the panel
+console.log(dynamic_canvas.layoutTree.canvasEl);
+
 const stftVisualizer = new STFTVisualizer(
   audioPlayer,
-  dynamic_canvas.getCanvas(dynamic_canvas.getAvailableCanvases()[0].id).element,
-  STFTDetails
+  dynamic_canvas.layoutTree.canvasEl,
+  STFTContent
 );
+
+stftVisualizer._start();
+
 // register audioplayer as streamable input
 stream_audio_input.push(audioPlayer);
