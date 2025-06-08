@@ -64,7 +64,7 @@ export class STFTVisualizer {
     _makeWindow() {
         this.window = new Float32Array(this.fftSize);
         for (let n = 0; n < this.fftSize; n++) {
-            this.window[n] = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (this.fftSize - 1)));
+            this.window[n] = 1 - Math.cos((2 * Math.PI * n) / (this.fftSize - 1));
         }
     }
 
@@ -102,9 +102,8 @@ export class STFTVisualizer {
             // 3. We're not going from 0x0 to something (initial setup)
             const hasValidBackup = this.backupCanvas.width > 0 && this.backupCanvas.height > 0;
             const hasValidDestination = currentWidth > 0 && currentHeight > 0;
-            const notInitialSetup = this.lastWidth > 0 && this.lastHeight > 0;
             
-            if (hasValidBackup && hasValidDestination && notInitialSetup) {
+            if (hasValidBackup && hasValidDestination) {
                 try {
                     // Clear the main canvas and scale the backup to new size
                     this.ctx.clearRect(0, 0, currentWidth, currentHeight);
@@ -121,7 +120,7 @@ export class STFTVisualizer {
                     console.log('Could not scale canvas content:', e);
                 }
             } else {
-                console.log('Skipping scale - invalid dimensions or initial setup');
+                console.log('Skipping scale - invalid dimensions');
             }
             
             // Update stored dimensions
@@ -223,6 +222,7 @@ export class STFTVisualizer {
             
             let db = 20 * Math.log10(mags[i]);
             let norm = (db + 100) / 100;
+            // 0 magnitude has -inf db so we clip
             if (norm < 0){
                 norm = 0;
             } else if (norm > 1) {
