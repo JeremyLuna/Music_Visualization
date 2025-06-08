@@ -220,7 +220,7 @@ export class STFTVisualizer {
 
         // Draw new column on the right
         for (let i = 0; i < this.binCount; i++) {
-            const bin_spacing = Math.floor(this.height / this.binCount);
+            const bin_spacing = Math.ceil(this.height / this.binCount);
             const y = this.height - (i * this.height / this.binCount);
             
             let db = 20 * Math.log10(mags[i] + 1e-8);
