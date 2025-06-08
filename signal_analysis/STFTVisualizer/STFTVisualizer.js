@@ -1,5 +1,7 @@
 // STFTVisualizer.js - Modified for canvas scaling during resize
 
+import { FFT } from '../FFT/FFT.js';
+
 export class STFTVisualizer {
     constructor(audioSource, canvasElement, settingsDiv) {
         this.audioSource = audioSource;
@@ -175,8 +177,6 @@ export class STFTVisualizer {
 
         // Process FFT frames
         while (this.sampleBuffer.length >= this.fftSize) {
-            console.log("proc fft");
-            
             const frame = this.sampleBuffer.slice(0, this.fftSize);
             this.sampleBuffer = this.sampleBuffer.slice(this.hopSize);
 
@@ -189,14 +189,14 @@ export class STFTVisualizer {
             }
 
             // Perform FFT
-            this._fft(re, im);
+            FFT.fft_in_place(re, im);
 
             // Compute magnitude spectrum
             const mags = new Float32Array(this.binCount);
             for (let i = 0; i < this.binCount; i++) {
                 const real = re[i];
                 const imag = im[i];
-                mags[i] = Math.sqrt(real * real + imag * imag);
+                mags[i] = Math.sqrt(real * real + imag * imag) / this.binCount;
             }
 
             // Draw spectrogram column
@@ -209,8 +209,6 @@ export class STFTVisualizer {
 
     _drawSpectrogramColumn(mags) {
         // Shift existing image left by 1 pixel
-        console.log("draw proc");
-        
         try {
             this.ctx.drawImage(this.canvas, 1, 0);
         } catch (e) {
@@ -223,56 +221,20 @@ export class STFTVisualizer {
             const bin_spacing = Math.ceil(this.height / this.binCount);
             const y = this.height - (i * this.height / this.binCount);
             
-            let db = 20 * Math.log10(mags[i] + 1e-8);
+            let db = 20 * Math.log10(mags[i]);
             let norm = (db + 100) / 100;
-            if (norm < 0) norm = 0;
-            if (norm > 1) norm = 1;
+            if (norm < 0){
+                norm = 0;
+            } else if (norm > 1) {
+                console.log("clipped:", norm);
+                norm = 1;
+            }
             
             const intensity = Math.floor(norm * 255);
             this.ctx.fillStyle = `rgb(${intensity},${intensity},${intensity})`;
-            console.log("coords", this.width - 1, y, 1, bin_spacing);
             
             this.ctx.fillRect(0, y, 1, bin_spacing);
             
-        }
-    }
-
-    _fft(re, im) {
-        const n = re.length;
-        const levels = Math.log2(n);
-        if (Math.floor(levels) !== levels) {
-            throw new Error('FFT size must be power of 2');
-        }
-
-        // Bit-reversed addressing
-        for (let i = 0; i < n; i++) {
-            let j = 0;
-            for (let k = 0; k < levels; k++) {
-                j = (j << 1) | ((i >>> k) & 1);
-            }
-            if (j > i) {
-                [re[i], re[j]] = [re[j], re[i]];
-                [im[i], im[j]] = [im[j], im[i]];
-            }
-        }
-
-        // Cooley-Tukey FFT
-        for (let size = 2; size <= n; size <<= 1) {
-            const halfSize = size >> 1;
-            const tableStep = n / size;
-            for (let i = 0; i < n; i += size) {
-                for (let j = 0; j < halfSize; j++) {
-                    const k = j * tableStep;
-                    const tRe = Math.cos(-2 * Math.PI * k / n) * re[i + j + halfSize]
-                        - Math.sin(-2 * Math.PI * k / n) * im[i + j + halfSize];
-                    const tIm = Math.sin(-2 * Math.PI * k / n) * re[i + j + halfSize]
-                        + Math.cos(-2 * Math.PI * k / n) * im[i + j + halfSize];
-                    re[i + j + halfSize] = re[i + j] - tRe;
-                    im[i + j + halfSize] = im[i + j] - tIm;
-                    re[i + j] += tRe;
-                    im[i + j] += tIm;
-                }
-            }
         }
     }
 
