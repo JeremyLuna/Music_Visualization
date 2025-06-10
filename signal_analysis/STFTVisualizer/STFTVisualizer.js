@@ -9,6 +9,10 @@ export class STFTVisualizer {
         this.ctx = this.canvas.getContext('2d');
         this.settingsDiv = settingsDiv;
 
+        this.canvas.close = () => {
+            this._stop();
+        };
+
         // Default FFT settings
         this.fftSize = 1024;
         this.hopSize = this.fftSize / 2;
@@ -76,6 +80,8 @@ export class STFTVisualizer {
 
     _stop() {
         this._running = false;
+        console.log("visualizer has stopped.");
+        
     }
 
     _renderLoop() {
