@@ -93,8 +93,6 @@ export class DynamicCanvas {
             // Initialize drawing if first time
             const ctx = canvasEl.getContext('2d');
             if (!canvasEl._initialized) {
-                ctx.fillStyle = node.color;
-                //ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
                 canvasEl._initialized = true;
             }
 
@@ -104,20 +102,12 @@ export class DynamicCanvas {
             // Mouse events for content
             content.onmouseenter = (e) => {
                 e.stopPropagation();
-                // Optionally draw something to indicate canvas is active
-                //const ctxHover = canvasEl.getContext('2d');
-                //ctxHover.fillStyle = 'rgba(0,0,0,0.05)';
-                //ctxHover.fillRect(0, 0, canvasEl.width, canvasEl.height);
             };
 
             // Observe resizing to update canvas size
             const resizeObserver = new ResizeObserver(() => {
                 canvasEl.width = content.clientWidth;
                 canvasEl.height = content.clientHeight;
-                // Optionally redraw background
-                //const ctxResize = canvasEl.getContext('2d');
-                //ctxResize.fillStyle = node.color;
-                //ctxResize.fillRect(0, 0, canvasEl.width, canvasEl.height);
             });
             resizeObserver.observe(content);
 
