@@ -280,9 +280,6 @@ export class DynamicCanvas {
         // Cannot remove root if it's the only canvas
         if (canvasId === this.layoutTree.id && this.layoutTree.type === 'canvas') return;
 
-        // tell plugins
-        this.findNodeById(this.layoutTree, canvasId).canvasEl.close();
-
         const parent = this.findParentById(this.layoutTree, canvasId);
         if (!parent) return;
         const idx = parent.children.findIndex(c => c.id === canvasId);
