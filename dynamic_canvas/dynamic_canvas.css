@@ -1,11 +1,11 @@
 /* 1. Top‑level containers (renamed) */
-.dc-container {
+.viewport-array {
     display: flex;
     height: 100vh;
     width: 100vw;
 }
 
-.dc-canvas-area {
+.viewport {
     flex: 1;
     display: flex;
     position: relative;

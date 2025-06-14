@@ -32,12 +32,12 @@ export class DynamicCanvas {
     }
 
     createDOM() {
-        // Main container
-        this.container = this.createEl('div', 'dc-container');
+        // Main viewport array container
+        this.viewportArray = this.createEl('div', 'viewport-array');
         // Area where panels (canvases or splits) get rendered
-        this.canvasArea = this.createEl('div', 'dc-canvas-area');
-        this.container.appendChild(this.canvasArea);
-        document.body.appendChild(this.container);
+        this.viewport = this.createEl('div', 'viewport');
+        this.viewportArray.appendChild(this.viewport);
+        document.body.appendChild(this.viewportArray);
     }
 
     bindUIAutohide() {
@@ -54,9 +54,9 @@ export class DynamicCanvas {
 
     render() {
         // Clear previous contents
-        this.canvasArea.innerHTML = '';
+        this.viewport.innerHTML = '';
         // Recursively render starting from root
-        this.renderNode(this.layoutTree, this.canvasArea);
+        this.renderNode(this.layoutTree, this.viewport);
     }
 
     renderNode(node, container) {

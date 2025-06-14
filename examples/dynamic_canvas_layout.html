@@ -19,13 +19,13 @@
             color: white;
         }
 
-        .container {
+        .viewport-array {
             display: flex;
             height: 100vh;
             width: 100vw;
         }
 
-        .canvas-area {
+        .viewport {
             flex: 1;
             display: flex;
             position: relative;
@@ -187,8 +187,8 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="canvas-area" id="canvasArea"></div>
+    <div class="viewport-array">
+        <div class="viewport" id="viewport"></div>
     </div>
 
     <div class="info">
@@ -467,9 +467,9 @@
         }
 
         function render() {
-            const canvasArea = document.getElementById('canvasArea');
-            canvasArea.innerHTML = '';
-            renderNode(layoutTree, canvasArea);
+            const viewport = document.getElementById('viewport');
+            viewport.innerHTML = '';
+            renderNode(layoutTree, viewport);
         }
 
         // Initial render
