@@ -61,6 +61,11 @@ export class DynamicCanvas {
 
     renderNode(node, container) {
         if (node.type === 'canvas') {
+            // Leaf: render a single canvas panel
+            const panel = this.createEl('div', 'canvas-panel');
+            panel.style.flex = '1';
+            panel.dataset.id = node.id;
+
             // CONTENT DIV that will now hold an actual <canvas>
             const content = this.createEl('div', 'canvas-content');
             content.style.position = 'relative';
@@ -108,6 +113,40 @@ export class DynamicCanvas {
 
             panel.appendChild(content);
 
+            // CONTROLS (split/remove buttons)
+            const controls = this.createEl('div', 'canvas-controls');
+            // Split horizontally
+            const splitHBtn = this.createEl('button', 'control-btn');
+            splitHBtn.innerHTML = '⇔';
+            splitHBtn.title = 'Split horizontally';
+            splitHBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.splitCanvas(node.id, 'horizontal');
+            };
+            // Split vertically
+            const splitVBtn = this.createEl('button', 'control-btn');
+            splitVBtn.innerHTML = '⇕';
+            splitVBtn.title = 'Split vertically';
+            splitVBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.splitCanvas(node.id, 'vertical');
+            };
+            // Remove canvas (only if not root)
+            const removeBtn = this.createEl('button', 'control-btn');
+            removeBtn.innerHTML = '✕';
+            removeBtn.title = 'Remove this canvas';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.removeCanvas(node.id);
+            };
+            controls.appendChild(splitHBtn);
+            controls.appendChild(splitVBtn);
+            if (node.id !== this.layoutTree.id) {
+                controls.appendChild(removeBtn);
+            }
+            panel.appendChild(controls);
+
+            container.appendChild(panel);
         } else if (node.type === 'split') {
             // Internal node: render two children with a splitter between
             const splitContainer = this.createEl('div', 'split-container');
