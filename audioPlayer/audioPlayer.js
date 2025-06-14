@@ -49,6 +49,7 @@ export class AudioSamplePuller {
   }
 }
 
+
 export class MusicPlayer {
   /**
    * @param {HTMLDivElement} containerDiv
@@ -61,7 +62,7 @@ export class MusicPlayer {
       throw new Error('MusicPlayer: constructor argument must be a <div>.');
     }
     this.container = containerDiv;
-    this.container.classList.add('music-player-container');
+    this.container.style.fontFamily = 'sans-serif';
     this.workletURL = workletURL;
     this.audioContext = null;
     this.samplePuller = null;
@@ -71,11 +72,6 @@ export class MusicPlayer {
     this.audioBufferInfo = null;
     this._buildUI();
 
-    // load css
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = './audioPlayer/styles.css';
-    document.head.appendChild(link);
   }
 
   _buildUI() {
@@ -83,25 +79,42 @@ export class MusicPlayer {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.accept = 'audio/*';
-    this.fileInput.classList.add('music-player-file-input');
+    this.fileInput.style.marginBottom = '8px';
     this.fileInput.addEventListener('change', e => this._onFileSelected(e));
     this.container.appendChild(this.fileInput);
 
     // — Play/Pause toggle & Stop buttons —
     this.controlsDiv = document.createElement('div');
-    this.controlsDiv.classList.add('music-player-controls');
+    this.controlsDiv.style.marginTop = '8px';
 
     this.playPauseBtn = document.createElement('button');
     this.playPauseBtn.textContent = 'Play';
     this.playPauseBtn.disabled = true;
-    this.playPauseBtn.classList.add('music-player-btn');
+    Object.assign(this.playPauseBtn.style, {
+      background: '#222',
+      color: '#fff',
+      border: 'none',
+      padding: '6px 12px',
+      fontSize: '14px',
+      borderRadius: '4px',
+      cursor: 'pointer'
+    });
     this.playPauseBtn.addEventListener('click', () => this._togglePlayPause());
     this.controlsDiv.appendChild(this.playPauseBtn);
 
     this.stopBtn = document.createElement('button');
     this.stopBtn.textContent = 'Stop';
     this.stopBtn.disabled = true;
-    this.stopBtn.classList.add('music-player-btn');
+    Object.assign(this.stopBtn.style, {
+      background: '#222',
+      color: '#fff',
+      border: 'none',
+      padding: '6px 12px',
+      fontSize: '14px',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      marginLeft: '4px'
+    });
     this.stopBtn.addEventListener('click', () => this.stop());
     this.controlsDiv.appendChild(this.stopBtn);
 
@@ -115,23 +128,23 @@ export class MusicPlayer {
     this.slider.value = 0;
     this.slider.step = 0.01;
     this.slider.disabled = true;
-    this.slider.classList.add('music-player-slider');
+    Object.assign(this.slider.style, { width: '100%', marginTop: '8px' });
     this.slider.addEventListener('input', () => this._onScrub());
     this.container.appendChild(this.slider);
 
     // — Time display (MM:SS / MM:SS) —
     this.timeDisplay = document.createElement('div');
     this.timeDisplay.textContent = '00:00 / 00:00';
-    this.timeDisplay.classList.add('music-player-time-display');
+    Object.assign(this.timeDisplay.style, { textAlign: 'right', fontFamily: 'monospace', marginTop: '4px' });
     this.container.appendChild(this.timeDisplay);
 
     // — Volume slider —
     this.volumeContainer = document.createElement('div');
-    this.volumeContainer.classList.add('music-player-volume-container');
+    Object.assign(this.volumeContainer.style, { marginTop: '8px', display: 'flex', alignItems: 'center' });
 
     const volLabel = document.createElement('label');
     volLabel.textContent = 'Volume';
-    volLabel.classList.add('music-player-volume-label');
+    Object.assign(volLabel.style, { marginRight: '8px', fontSize: '14px' });
     this.volumeContainer.appendChild(volLabel);
 
     this.volumeSlider = document.createElement('input');
@@ -141,7 +154,7 @@ export class MusicPlayer {
     this.volumeSlider.step = 0.01;
     this.volumeSlider.value = 1;
     this.volumeSlider.disabled = true;
-    this.volumeSlider.classList.add('music-player-volume-slider');
+    this.volumeSlider.style.flex = '1';
     this.volumeSlider.addEventListener('input', () => {
       if (this.gainNode) {
         this.gainNode.gain.value = parseFloat(this.volumeSlider.value);
@@ -154,7 +167,14 @@ export class MusicPlayer {
     // — Details panel —
     this.detailsPre = document.createElement('pre');
     this.detailsPre.textContent = 'No track loaded.';
-    this.detailsPre.classList.add('music-player-details');
+    Object.assign(this.detailsPre.style, {
+      marginTop: '8px',
+      padding: '8px',
+      fontFamily: 'Menlo, monospace',
+      fontSize: '13px',
+      whiteSpace: 'pre-wrap',
+      borderRadius: '4px'
+    });
     this.container.appendChild(this.detailsPre);
   }
 
@@ -326,18 +346,5 @@ export class MusicPlayer {
 }
 
 // --- USAGE EXAMPLE ---
-// 1) Include both files in your HTML:
-//
-//    <link rel="stylesheet" href="styles.css" />
-//    <script src="music-player.js"></script>
-//
-// 2) Add a container:
-//
-//    <div id="player-container"></div>
-//
-// 3) After DOM loads:
-//
-//    const container = document.getElementById('player-container');
-//    const player = new MusicPlayer(container, './sample-processor.js');
-//
-// No inline styles remain; all appearance is driven by `styles.css`.
+// const container = document.getElementById('player-container');
+// const player = new MusicPlayer(container, './sample-processor.js');
