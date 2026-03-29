@@ -1,6 +1,12 @@
 # Music_Visualization
 https://jeremyluna.github.io/Music_Visualization/
 
+To test locally, 
+    run:
+        python -m http.server 8000
+    in a browser, go to:
+        http://127.0.0.1:8000/
+
 Have factored oscilloscope view
 
 need to add:
