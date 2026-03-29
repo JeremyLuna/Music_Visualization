@@ -1,8 +1,78 @@
+const STYLE_MAP = {
+    'viewport-array': {
+        display: 'flex',
+        height: '100vh',
+        width: '100vw'
+    },
+    'viewport': {
+        flex: '1',
+        display: 'flex',
+        position: 'relative'
+    },
+    'split-container': {
+        display: 'flex',
+        width: '100%',
+        height: '100%',
+        position: 'relative'
+    },
+    'split-child': {
+        display: 'flex',
+        flex: '1',
+        flexDirection: 'column'
+    },
+    'canvas-panel': {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        border: '2px solid #333',
+        minWidth: '50px',
+        minHeight: '50px'
+    },
+    'canvas-controls': {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        display: 'flex',
+        gap: '4px',
+        opacity: '0',
+        zIndex: '100',
+        pointerEvents: 'none'
+    },
+    'control-btn': {
+        width: '24px',
+        height: '24px',
+        background: 'rgba(0, 122, 204, 0.9)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backdropFilter: 'blur(10px)'
+    },
+    'canvas-content': {
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden'
+    },
+    'embedded-canvas': {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        display: 'block'
+    }
+};
+
 export class DynamicCanvasView {
     constructor(model, controller, options = {}) {
         this.model = model;
         this.controller = controller;
-        this.cssPath = options.cssPath || 'dynamic_canvas/dynamic_canvas.css';
         this.dragState = null;
         this.hideUITimer = null;
         this.HIDE_DELAY = 2500;
@@ -10,17 +80,9 @@ export class DynamicCanvasView {
     }
 
     init() {
-        this.loadStyles();
         this.createDOM();
         this.bindUIAutohide();
         this.render();
-    }
-
-    loadStyles() {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = this.cssPath;
-        document.head.appendChild(link);
     }
 
     createDOM() {
@@ -32,10 +94,18 @@ export class DynamicCanvasView {
 
     bindUIAutohide() {
         const showUI = () => {
-            document.body.classList.remove('hide-ui');
+            document.body.style.cursor = '';
+            document.querySelectorAll('.canvas-controls').forEach(c => {
+                c.style.opacity = '1';
+                c.style.pointerEvents = 'auto';
+            });
             clearTimeout(this.hideUITimer);
             this.hideUITimer = setTimeout(() => {
-                document.body.classList.add('hide-ui');
+                document.body.style.cursor = 'none';
+                document.querySelectorAll('.canvas-controls').forEach(c => {
+                    c.style.opacity = '0';
+                    c.style.pointerEvents = 'none';
+                });
             }, this.HIDE_DELAY);
         };
         document.addEventListener('mousemove', showUI);
@@ -121,6 +191,32 @@ export class DynamicCanvasView {
             }
             panel.appendChild(controls);
 
+            panel.addEventListener('mouseenter', () => {
+                controls.style.opacity = '1';
+                controls.style.pointerEvents = 'auto';
+                panel.style.borderColor = '#555';
+            });
+            panel.addEventListener('mouseleave', () => {
+                controls.style.opacity = '0';
+                controls.style.pointerEvents = 'none';
+                panel.style.borderColor = '#333';
+            });
+
+            [splitHBtn, splitVBtn, removeBtn].forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = btn === removeBtn
+                        ? 'rgba(220,53,69,1)'
+                        : 'rgba(0,122,204,1)';
+                    btn.style.transform = 'scale(1.1)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.background = btn === removeBtn
+                        ? 'rgba(220,53,69,0.9)'
+                        : 'rgba(0,122,204,0.9)';
+                    btn.style.transform = 'scale(1)';
+                });
+            });
+
             container.appendChild(panel);
         } else if (node.type === 'split') {
             const splitContainer = this.createEl('div', 'split-container');
@@ -167,10 +263,8 @@ export class DynamicCanvasView {
                     splitContainer,
                     index: 0
                 };
-                document.body.classList.add('dragging');
-                if (node.direction === 'vertical') {
-                    document.body.classList.add('dragging-vertical');
-                }
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = node.direction === 'horizontal' ? 'col-resize' : 'row-resize';
                 document.addEventListener('mousemove', this.onDrag);
                 document.addEventListener('mouseup', this.onDragEnd);
             };
@@ -203,7 +297,8 @@ export class DynamicCanvasView {
     };
 
     onDragEnd = () => {
-        document.body.classList.remove('dragging', 'dragging-vertical');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
         document.removeEventListener('mousemove', this.onDrag);
         document.removeEventListener('mouseup', this.onDragEnd);
         this.dragState = null;
@@ -211,7 +306,9 @@ export class DynamicCanvasView {
 
     createEl(tag, className) {
         const el = document.createElement(tag);
-        if (className) el.classList.add(className);
+        if (className && STYLE_MAP[className]) {
+            Object.assign(el.style, STYLE_MAP[className]);
+        }
         return el;
     }
 }

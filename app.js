@@ -3,6 +3,16 @@ import { DynamicCanvas } from './dynamic_canvas/dynamicCanvas.js';
 import { AudioSamplePuller, MusicPlayer } from './audioPlayer/audioPlayer.js';
 import { STFTVisualizer } from './STFTVisualizer/STFTVisualizer.js';
 
+// Apply basic global styling without a stylesheet
+document.body.style.margin = '0';
+document.body.style.padding = '0';
+document.body.style.boxSizing = 'border-box';
+document.body.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+document.body.style.height = '100vh';
+document.body.style.overflow = 'hidden';
+document.body.style.background = '#1a1a1a';
+document.body.style.color = 'white';
+
 // TODO:
 // make favicon with https://favicon.io/favicon-converter/
 // don't rebuild canvases
