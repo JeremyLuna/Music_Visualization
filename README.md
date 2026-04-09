@@ -11,6 +11,8 @@ Have factored oscilloscope view
 
 need to add:
 
+Change left right white arrow to left right black arrow
+
 Adjustable harmonics
 
 microphone input
