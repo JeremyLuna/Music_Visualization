@@ -11,7 +11,9 @@ Have factored oscilloscope view
 
 need to add:
 
-deprecate audioPlayer.pullAllSamples() in favor of events
+deploy to pages on main commit
+
+deprecate audioPlayer.pullAllSamples() in favor of events?
 
 Change left right white arrow to left right black arrow
 
