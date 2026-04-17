@@ -1,7 +1,8 @@
 export class AudioSamplePuller {
-  constructor(audioContext, workletURL) {
+  constructor(audioContext, workletURL, eventEmitter = null) {
     this.audioContext = audioContext;
     this.workletURL = workletURL;
+    this.eventEmitter = eventEmitter;
     this.channelDataBuffer = [];
     this._ready = this._initWorklet();
   }
@@ -14,8 +15,10 @@ export class AudioSamplePuller {
     });
     this.node.port.onmessage = (e) => {
       const channels = e.data.map(ch => ch.slice());
-      this.channelDataBuffer.push(channels);
-    };
+      this.channelDataBuffer.push(channels);      // Emit event if eventEmitter is provided
+      if (this.eventEmitter) {
+        this.eventEmitter.emit('samplesAvailable', { channels });
+      }    };
   }
 
   async ready() {
@@ -55,14 +58,17 @@ export class MusicPlayer {
    *   The DIV where the player UI should be created.
    * @param {string} workletURL
    *   Path/URL to 'sample-processor.js' (e.g. './sample-processor.js').
+   * @param {EventEmitter} eventEmitter
+   *   Optional EventEmitter for emitting 'samplesAvailable' events.
    */
-  constructor(containerDiv, workletURL = 'sample-processor.js') {
+  constructor(containerDiv, workletURL = 'sample-processor.js', eventEmitter = null) {
     if (!(containerDiv instanceof HTMLDivElement)) {
       throw new Error('MusicPlayer: constructor argument must be a <div>.');
     }
     this.container = containerDiv;
     this.container.classList.add('music-player-container');
     this.workletURL = workletURL;
+    this.eventEmitter = eventEmitter;
     this.audioContext = null;
     this.samplePuller = null;
     this.audioElement = null;
@@ -220,7 +226,7 @@ export class MusicPlayer {
     this.mediaSourceNode = this.audioContext.createMediaElementSource(this.audioElement);
 
     // 8) Instantiate AudioSamplePuller and tap raw signal
-    this.samplePuller = new AudioSamplePuller(this.audioContext, this.workletURL);
+    this.samplePuller = new AudioSamplePuller(this.audioContext, this.workletURL, this.eventEmitter);
     await this.samplePuller.ready();
     this.mediaSourceNode.connect(this.samplePuller.node);
 

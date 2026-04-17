@@ -11,15 +11,13 @@ Have factored oscilloscope view
 
 need to add:
 
+deprecate audioPlayer.pullAllSamples() in favor of events
+
 Change left right white arrow to left right black arrow
 
 Adjustable harmonics
 
-microphone input
-
-scrubber
-
-spotify or youtube input
+microphone, spotify, youtube input
 
 spiraled view
 

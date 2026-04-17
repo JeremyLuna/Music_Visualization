@@ -2,19 +2,21 @@ import { ControlPanel } from './controlPanel/controlPanel.js';
 import { DynamicCanvas } from './dynamic_canvas/dynamicCanvas.js';
 import { AudioSamplePuller, MusicPlayer } from './audioPlayer/audioPlayer.js';
 import { STFTVisualizer } from './STFTVisualizer/STFTVisualizer.js';
+import { EventEmitter } from './EventEmitter.js';
+import { registryInstance as visualizerRegistry } from './VisualizerRegistry.js';
+import { STFTVisualizerAdapter } from './visualizers/STFTVisualizerAdapter.js';
+
+// Create shared event emitter for component communication
+const eventEmitter = new EventEmitter();
+
+// Register available visualizers
+visualizerRegistry.register('stft', STFTVisualizerAdapter);
 
 // TODO:
 // make favicon with https://favicon.io/favicon-converter/
 // don't rebuild canvases
 // handle canvas registration
 // dont think we need canvas-content class, it only holds a canvas
-
-// make array for input registration
-const chunk_audio_inputs = [];
-const stream_audio_input = []; // has a pullAllSamples() function
-
-// make array of availible plugins
-const plugins = [];
 
 // import control panel
 const control_panel = new ControlPanel();
@@ -30,24 +32,22 @@ control_panel.tabContent.appendChild(audioDetails);
 // put the file player in the panel
 const audioPlayer = new MusicPlayer(
   audioContent,
-  './audioplayer/SampleProcessor.js'
+  './audioplayer/SampleProcessor.js',
+  eventEmitter
 );
-// register audioplayer as streamable input
-stream_audio_input.push(audioPlayer);
 
-// make STFT plugin
+// make STFT plugin via registry
 // make panel elements
 const [STFTDetails, STFTContent] = control_panel.createDetails("STFT");
 // put them on the panel
 control_panel.tabContent.appendChild(STFTDetails);
-// put the file player in the panel
-const stftVisualizer = new STFTVisualizer(
-  audioPlayer,
+// create visualizer via registry
+const stftVisualizer = visualizerRegistry.create(
+  'stft',
   dynamic_canvas.layoutTree.canvasEl,
-  STFTContent
+  STFTContent,
+  eventEmitter,
+  audioPlayer
 );
 
-stftVisualizer._start();
-
-// register audioplayer as streamable input
-stream_audio_input.push(audioPlayer);
+stftVisualizer.start();
