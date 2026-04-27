@@ -9,23 +9,32 @@ To test locally,
     to reload in browser after changes:
         ctrl+shift+r
 
+TODO:
+pause visualizers on input pause
+stft
+    fix top row which shows background
+    scale height logarithmically
+    make range adjustable
 Have factored oscilloscope view
-
-need to add:
-
-Adjustable harmonics
-
+    several options for stability
+        none
+        zero crossing
+        autocorrelation
+            self
+            reference sine wave
+analytic signal
+    single
+    constant q factored
+        optional include harmonics
+        optional include neighbors (chords)
 microphone input
-
 spotify or youtube input
-
 spiraled view
-
 piano rolled view
 
 can have retrospective or continuous mode, although microphone would have to be continuous
 
-resources:
+RESOURCES:
 https://www.mathworks.com/help/wavelet/ref/vmd.html
 https://arxiv.org/pdf/2501.09174
 https://ww3.math.ucla.edu/camreport/cam13-22.pdf
