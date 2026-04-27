@@ -6,6 +6,8 @@ To test locally,
         python -m http.server 8000
     in a browser, go to:
         http://127.0.0.1:8000/
+    to reload in browser after changes:
+        ctrl+shift+r
 
 Have factored oscilloscope view
 
