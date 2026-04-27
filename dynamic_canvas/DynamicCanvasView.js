@@ -94,14 +94,14 @@ export class DynamicCanvasView {
 
             const controls = this.createEl('div', 'canvas-controls');
             const splitHBtn = this.createEl('button', 'control-btn');
-            splitHBtn.innerHTML = '⬌';
+            splitHBtn.innerHTML = '↔';
             splitHBtn.title = 'Split horizontally';
             splitHBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.controller.splitCanvas(node.id, 'horizontal');
             };
             const splitVBtn = this.createEl('button', 'control-btn');
-            splitVBtn.innerHTML = '⬍';
+            splitVBtn.innerHTML = '↕';
             splitVBtn.title = 'Split vertically';
             splitVBtn.onclick = (e) => {
                 e.stopPropagation();
