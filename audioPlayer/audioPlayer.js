@@ -69,6 +69,7 @@ export class MusicPlayer {
     this.mediaSourceNode = null;
     this.gainNode = null;
     this.audioBufferInfo = null;
+    this.cachedSamples = null;
     this._buildUI();
 
     // load css
@@ -282,7 +283,14 @@ export class MusicPlayer {
       console.warn('MusicPlayer: samplePuller not initialized yet.');
       return null;
     }
-    return this.samplePuller.pullSamples();
+    if (this.cachedSamples) {
+      return this.cachedSamples.map(ch => ch.slice());
+    }
+    const fresh = this.samplePuller.pullSamples();
+    this.cachedSamples = fresh;
+    // Clear cache after current tick so next frame gets fresh samples
+    setTimeout(() => { this.cachedSamples = null; }, 0);
+    return fresh ? fresh.map(ch => ch.slice()) : null;
   }
 
   _cleanupAudio() {
