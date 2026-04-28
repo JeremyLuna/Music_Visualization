@@ -12,7 +12,6 @@ To test locally,
 TODO:
 pause visualizers on input pause
 stft
-    fix top row which shows background
     scale height logarithmically
     make range adjustable
 Have factored oscilloscope view

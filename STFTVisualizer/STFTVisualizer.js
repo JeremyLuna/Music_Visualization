@@ -222,9 +222,9 @@ export class STFTVisualizer {
         }
 
         // Draw new column on the right
+        const bin_spacing = this.height / this.binCount;  // Use exact fractional spacing
         for (let i = 0; i < this.binCount; i++) {
-            const bin_spacing = Math.ceil(this.height / this.binCount);
-            const y = this.height - (i * this.height / this.binCount);
+            const y = (this.binCount - 1 - i) * bin_spacing;  // Position from top to bottom
             
             let db = 20 * Math.log10(mags[i]);
             let norm = (db + 100) / 100;
@@ -240,7 +240,6 @@ export class STFTVisualizer {
             this.ctx.fillStyle = `rgb(${intensity},${intensity},${intensity})`;
             
             this.ctx.fillRect(0, y, 1, bin_spacing);
-            
         }
     }
 
