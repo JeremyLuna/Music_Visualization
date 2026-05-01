@@ -1,0 +1,14 @@
+{:source-paths ["src"]
+ :dependencies [[reagent "1.2.0"]]
+ :builds
+ {:app
+  {:target :browser
+   :output-dir "public/js"
+   :asset-path "/js"
+   :modules {:main {:entries [app.init]}}
+   :devtools {:http-port 3000
+              :http-host "127.0.0.1"}
+   :release
+   {:output-to "public/js/app.js"
+    :output-wrapper false
+    :source-map true}}}}

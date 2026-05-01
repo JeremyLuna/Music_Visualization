@@ -1,0 +1,11 @@
+node_modules/
+.shadow-cljs/
+.DS_Store
+.idea/
+out/
+*.js.map
+*.swp
+*.swo
+*~
+.classpath
+.project

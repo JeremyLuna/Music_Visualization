@@ -1,0 +1,18 @@
+{
+  "name": "music-visualization-clojurescript",
+  "version": "0.1.0",
+  "description": "Music visualization app in ClojureScript with Reagent and Shadow-cljs",
+  "scripts": {
+    "dev": "shadow-cljs watch app",
+    "release": "shadow-cljs release app",
+    "serve": "cd public && python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "fftjs": "^1.0.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.27.6"
+  }
+}
