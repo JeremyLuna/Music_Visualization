@@ -102,9 +102,43 @@
          ^{:key type}
          [:option {:value (name type)} name])]]
      
-     ;; Visualizer-specific settings (placeholder)
-     [:div {:style {:background "#f0f0f0" :padding "5px" :border-radius "3px" :font-size "11px"}}
-      [:p "Visualizer-specific settings (TODO)"]]]))
+     ;; Visualizer-specific settings
+     [:div {:style {:background "#f0f0f0" :padding "8px" :border-radius "3px" :font-size "11px"}}
+      (case selected-viz
+        :waveform
+        [:<>
+         [:label {:style {:display "block" :margin-bottom "4px"}} "Buffer Size"]
+         [:input {:type "number"
+                  :min 128 :max 8192 :step 128
+                  :value (or (:buffer-size settings) 2048)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:buffer-size (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Line Width"]
+         [:input {:type "number"
+                  :min 1 :max 8 :step 1
+                  :value (or (:line-width settings) 1)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:line-width (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Line Color"]
+         [:input {:type "color"
+                  :value (or (:line-color settings) "#00ff00")
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:line-color (-> % .-target .-value)})}]]
+
+        :stft
+        [:<>
+         [:label {:style {:display "block" :margin-bottom "4px"}} "FFT Size"]
+         [:select {:value (str (or (:fft-size settings) 512))
+                   :on-change #(state/dispatch :update-visualizer-settings
+                                               canvas-id
+                                               {:fft-size (js/parseInt (-> % .-target .-value))})}
+          (for [n [256 512 1024 2048 4096]]
+            ^{:key n} [:option {:value n} n])]]
+
+        [:p "No settings for this visualizer."])]]))
 
 ;; ============================================================================
 ;; Volume Control Component

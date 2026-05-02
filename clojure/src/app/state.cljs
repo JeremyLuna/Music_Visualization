@@ -41,6 +41,7 @@
     :ui {:show-control-panel false
          :settings {}}
     :visualizers {:instances {}}
+    :canvas-elements {}
     :samples {:channels {}}}))
 
 (defn- canvas-ids
@@ -86,6 +87,14 @@
     
     :toggle-control-panel
     (swap! app-state update-in [:ui :show-control-panel] not)
+
+    :register-canvas-element
+    (let [[canvas-id canvas-el] args]
+      (swap! app-state assoc-in [:canvas-elements canvas-id] canvas-el))
+
+    :unregister-canvas-element
+    (let [[canvas-id] args]
+      (swap! app-state update :canvas-elements dissoc canvas-id))
     
     :split-canvas
     (let [[canvas-id orientation] args]

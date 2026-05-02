@@ -12,7 +12,7 @@
 
 (defn canvas-element
   "Create a canvas DOM element with sizing."
-  []
+  [canvas-id]
   (let [el (r/atom nil)]
     (r/create-class
      {:component-did-mount
@@ -21,6 +21,7 @@
         (reset! el (r/dom-node this))
         
         ;; Set up ResizeObserver to track canvas size changes
+        (state/dispatch :register-canvas-element canvas-id @el)
         (when (exists? js/ResizeObserver)
           (let [observer (js/ResizeObserver.
                          (fn [entries]
@@ -33,6 +34,10 @@
                                (set! (.-width canvas) (int width))
                                (set! (.-height canvas) (int height))))))]
             (.observe observer @el))))
+
+      :component-will-unmount
+      (fn []
+        (state/dispatch :unregister-canvas-element canvas-id))
       
       :reagent-render
       (fn []
@@ -87,7 +92,7 @@
    ;; Canvas element
    [:div
     {:style {:flex 1 :overflow "hidden"}}
-    [canvas-element]]])
+    [canvas-element canvas-id]]])
 
 (declare layout-tree-view)
 
