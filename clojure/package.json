@@ -8,7 +8,7 @@
     "serve": "cd public && python3 -m http.server 8000"
   },
   "dependencies": {
-    "fftjs": "^1.0.7",
+    "fftjs": "^0.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

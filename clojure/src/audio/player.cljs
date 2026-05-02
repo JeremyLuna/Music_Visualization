@@ -61,9 +61,9 @@
                         (state/dispatch :set-sample-rate (interop/get-sample-rate audio-context))
                         
                         (resolve player))))
-             (.catch reject))))
+             (.catch reject)))
        
-       (catch e
+       (catch :default e
          (reject e))))))
 
 (defn load-audio-file

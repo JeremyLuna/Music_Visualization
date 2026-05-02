@@ -29,11 +29,11 @@
   (let [channel-buffers (mapv (fn [_] (atom (js/Float32Array. max-buffer-size)))
                               (range num-channels))
         write-indices (mapv (fn [_] (atom 0)) (range num-channels))
-        
+        port (.-port worklet-node)
         puller (->SamplePuller worklet-node channel-buffers num-channels max-buffer-size)]
     
     ;; Set up message listener for samples from worklet
-    (set! (.-onmessage (.-port worklet-node))
+    (aset port "onmessage"
           (fn [event]
             (let [data (.-data event)
                   msg-type (.-type data)]
@@ -59,7 +59,7 @@
                           (.set buffer (js/Float32Array. samples available) 0)
                           (reset! (aget write-indices ch) (- samples-len available))))))))))
     
-    puller))
+    puller)))
 
 (defn pull-all-samples
   "Extract all buffered samples from the puller.

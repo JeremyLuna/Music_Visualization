@@ -3,7 +3,9 @@
    
    Handles AudioContext creation, player setup, and component wiring."
   (:require [app.state :as state]
-            [audio.player :as player]))
+            [audio.player :as player]
+            [app.core :as app-core]
+            [reagent.core :as reagent]))
 
 ;; ============================================================================
 ;; Global Player State
@@ -89,10 +91,8 @@
         false)
       (do
         ;; Render the root component
-        (require '[app.core])
-        (let [reagent (require '[reagent.core])]
-          (reagent/render [(require '[app.core])/app-root] app-container)
-          true)))))
+        (reagent/render [app-core/app-root] app-container)
+        true))))
 
 ;; ============================================================================
 ;; Main Entry Point
