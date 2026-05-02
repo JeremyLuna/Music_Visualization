@@ -2,7 +2,18 @@
   "Control panel UI component for adjusting audio and visualizer settings."
   (:require [reagent.core :as r]
             [app.state :as state]
+            [audio.player :as player]
+            [canvas.model :as canvas-model]
             [visualizers.registry :as registry]))
+
+(defn- canvas-ids-from-layout
+  [node]
+  (cond
+    (nil? node) []
+    (= (:type node) :canvas) [(:id node)]
+    (= (:type node) :split) (concat (canvas-ids-from-layout (:left node))
+                                    (canvas-ids-from-layout (:right node)))
+    :else []))
 
 ;; ============================================================================
 ;; Audio Player Control Component
@@ -11,43 +22,57 @@
 (defn audio-player-controls
   "UI controls for audio playback (file upload, play, pause, seek)."
   []
-  [:div.audio-player {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
-   [:h3 {:style {:margin-bottom "10px"}} "Audio Player"]
+  (let [audio-player (get-in @state/app-state [:audio :player])
+        is-playing? (get-in @state/app-state [:audio :is-playing])
+        current-time (get-in @state/app-state [:audio :current-time])
+        duration (get-in @state/app-state [:audio :duration])]
+    [:div.audio-player {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
+     [:h3 {:style {:margin-bottom "10px"}} "Audio Player"]
    
-   ;; File upload
-   [:div {:style {:margin-bottom "10px"}}
-    [:input
-     {:type "file"
-      :accept "audio/*"
-      :style {:font-size "12px"}
-      :on-change (fn [e]
-                   ;; TODO: Load audio file via player
-                   (.log js/console "File selected:" (-> e .-target .-files (aget 0))))}]]
+     ;; File upload
+     [:div {:style {:margin-bottom "10px"}}
+      [:input
+       {:type "file"
+        :accept "audio/*"
+        :style {:font-size "12px"}
+        :on-change (fn [e]
+                     (let [file (-> e .-target .-files (aget 0))]
+                       (when (and audio-player file)
+                         (-> (player/load-audio-file audio-player file)
+                             (.catch (fn [err]
+                                       (.error js/console "Failed to load audio file:" err)))))))}]]
    
-   ;; Playback controls
-   [:div {:style {:display "flex" :gap "5px" :margin-bottom "10px"}}
-    [:button
-     {:on-click #(.log js/console "Play")
-      :style {:padding "5px 10px" :cursor "pointer"}}
-     "▶ Play"]
-    [:button
-     {:on-click #(.log js/console "Pause")
-      :style {:padding "5px 10px" :cursor "pointer"}}
-     "⏸ Pause"]
-    [:button
-     {:on-click #(.log js/console "Stop")
-      :style {:padding "5px 10px" :cursor "pointer"}}
-     "⏹ Stop"]]
+     ;; Playback controls
+     [:div {:style {:display "flex" :gap "5px" :margin-bottom "10px"}}
+      [:button
+       {:on-click #(when audio-player (player/play audio-player))
+        :disabled (nil? audio-player)
+        :style {:padding "5px 10px" :cursor "pointer"}}
+       (if is-playing? "▶ Resume" "▶ Play")]
+      [:button
+       {:on-click #(when audio-player (player/pause audio-player))
+        :disabled (nil? audio-player)
+        :style {:padding "5px 10px" :cursor "pointer"}}
+       "⏸ Pause"]
+      [:button
+       {:on-click #(when audio-player (player/stop audio-player))
+        :disabled (nil? audio-player)
+        :style {:padding "5px 10px" :cursor "pointer"}}
+       "⏹ Stop"]]
    
-   ;; Time display and seek
-   [:div {:style {:display "flex" :align-items "center" :gap "5px" :font-size "12px"}}
-    [:span "0:00 / 0:00"]
-    [:input
-     {:type "range"
-      :min 0
-      :max 100
-      :default-value 0
-      :style {:flex 1 :cursor "pointer"}}]]])
+     ;; Time display and seek
+     [:div {:style {:display "flex" :align-items "center" :gap "5px" :font-size "12px"}}
+      [:span (str (.toFixed current-time 1) " / " (.toFixed duration 1) "s")]
+      [:input
+       {:type "range"
+        :min 0
+        :max (max duration 0.001)
+        :value (min current-time (max duration 0.001))
+        :step 0.01
+        :disabled (or (nil? audio-player) (<= duration 0))
+        :on-change #(when audio-player
+                      (player/seek audio-player (js/parseFloat (-> % .-target .-value))))
+        :style {:flex 1 :cursor "pointer"}}]]]))
 
 ;; ============================================================================
 ;; Visualizer Settings Component
@@ -56,7 +81,10 @@
 (defn visualizer-settings
   "Settings for the selected visualizer."
   [canvas-id]
-  (let [available-viz (registry/get-available-visualizers)]
+  (let [available-viz (registry/get-available-visualizers)
+        selected-viz (or (some-> (canvas-model/find-node (get-in @state/app-state [:layout :root]) canvas-id)
+                                 :visualizer-type)
+                         :waveform)]
     [:div.visualizer-settings {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
      [:h4 {:style {:margin-bottom "10px"}} (str "Canvas " canvas-id " Settings")]
      
@@ -66,7 +94,10 @@
        "Visualizer Type:"]
       [:select
        {:style {:width "100%" :padding "5px" :font-size "12px"}
-        :on-change #(.log js/console "Visualizer changed:" (-> % .-target .-value))}
+        :value (name selected-viz)
+        :on-change #(state/dispatch :change-visualizer
+                                    canvas-id
+                                    (keyword (-> % .-target .-value)))}
        (for [{:keys [type name]} available-viz]
          ^{:key type}
          [:option {:value (name type)} name])]]
@@ -82,18 +113,23 @@
 (defn volume-control
   "Volume slider control."
   []
-  [:div {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
+  (let [audio-player (get-in @state/app-state [:audio :player])
+        volume (get-in @state/app-state [:audio :volume])]
+    [:div {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
    [:label {:style {:font-size "12px" :display "block" :margin-bottom "5px"}}
     "Volume:"]
    [:input
     {:type "range"
      :min 0
      :max 100
-     :default-value 100
+     :value (* 100 volume)
      :style {:width "100%"}
-     :on-change #(.log js/console "Volume changed:" (-> % .-target .-value))}]
+     :on-change #(let [v (/ (js/parseFloat (-> % .-target .-value)) 100)]
+                   (state/dispatch :set-volume v)
+                   (when audio-player
+                     (player/set-volume audio-player v)))}]
    [:span {:style {:font-size "11px" :color "#666"}}
-    " 100%"]])
+    (str " " (int (* 100 volume)) "%")]]))
 
 ;; ============================================================================
 ;; Main Control Panel Component
@@ -102,7 +138,8 @@
 (defn control-panel
   "Main control panel component with audio and visualizer controls."
   []
-  (let [show? (r/cursor state/app-state [:ui :show-control-panel])]
+  (let [show? (r/cursor state/app-state [:ui :show-control-panel])
+        layout-root (r/cursor state/app-state [:layout :root])]
     [:div.control-panel
      {:style {:position "fixed"
               :right (if @show? "0" "-300px")
@@ -135,10 +172,9 @@
       [volume-control]
       
       ;; Show visualizer settings for each canvas
-      [:div {:style {:padding "10px" :font-size "12px" :color "#666"}}
-       "Canvas-specific settings coming soon"]
-      
-      [visualizer-settings 0]]
+      (for [canvas-id (canvas-ids-from-layout @layout-root)]
+        ^{:key canvas-id}
+        [visualizer-settings canvas-id])]]
      
      ;; Toggle button outside (for hidden state)
      (when-not @show?
