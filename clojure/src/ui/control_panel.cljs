@@ -81,10 +81,10 @@
 (defn visualizer-settings
   "Settings for the selected visualizer."
   [canvas-id]
-  (let [canvas-node (canvas-model/find-node (get-in @state/app-state [:layout :root]) canvas-id)
-        available-viz (registry/get-available-visualizers)
-        selected-viz (or (:visualizer-type canvas-node) :waveform)
-        settings (or (:settings canvas-node) {})]
+  (let [available-viz (registry/get-available-visualizers)
+        selected-viz (or (some-> (canvas-model/find-node (get-in @state/app-state [:layout :root]) canvas-id)
+                                 :visualizer-type)
+                         :waveform)]
     [:div.visualizer-settings {:style {:padding "10px" :border-bottom "1px solid #ddd"}}
      [:h4 {:style {:margin-bottom "10px"}} (str "Canvas " canvas-id " Settings")]
      

@@ -133,7 +133,7 @@
                    (update-in [:layout :root] model/change-canvas-visualizer canvas-id visualizer-type)
                    (assoc-in [:visualizers :instances canvas-id]
                              {:type visualizer-type
-                              :settings {}}))))
+                              :settings (get-in s [:visualizers :instances canvas-id :settings] {})})))))
     
     :update-visualizer-settings
     (let [[canvas-id settings] args]
