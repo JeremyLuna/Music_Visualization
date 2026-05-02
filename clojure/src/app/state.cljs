@@ -18,7 +18,8 @@
          :settings {}}
     :visualizers {:instances {}  ;; {canvas-id -> visualizer instance}}
     :samples {:channels {}}})"
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [canvas.model :as model]))
 
 ;; Central application state atom
 (defonce app-state
@@ -28,6 +29,8 @@
             :sample-puller nil
             :sample-rate 0
             :duration 0
+            :current-time 0
+            :volume 1.0
             :is-playing false}
     :layout {:root {:type :canvas
                     :id 0
@@ -39,6 +42,10 @@
          :settings {}}
     :visualizers {:instances {}}
     :samples {:channels {}}}))
+
+(defn- canvas-ids
+  [layout-root]
+  (vec (model/get-all-canvas-ids layout-root)))
 
 ;; Dispatch functions for state updates
 (defn dispatch
@@ -52,10 +59,26 @@
     :set-sample-rate
     (let [[rate] args]
       (swap! app-state assoc-in [:audio :sample-rate] rate))
+
+    :set-audio-player
+    (let [[player] args]
+      (swap! app-state assoc-in [:audio :player] player))
+
+    :set-sample-puller
+    (let [[sample-puller] args]
+      (swap! app-state assoc-in [:audio :sample-puller] sample-puller))
     
     :set-duration
     (let [[duration] args]
       (swap! app-state assoc-in [:audio :duration] duration))
+
+    :set-current-time
+    (let [[current-time] args]
+      (swap! app-state assoc-in [:audio :current-time] current-time))
+
+    :set-volume
+    (let [[volume] args]
+      (swap! app-state assoc-in [:audio :volume] volume))
     
     :set-playing
     (let [[playing] args]
@@ -66,25 +89,54 @@
     
     :split-canvas
     (let [[canvas-id orientation] args]
-      ;; Note: Canvas split logic is handled in canvas.view
-      ;; (this is a placeholder for state updates if needed)
-      )
+      (swap! app-state
+             (fn [s]
+               (let [next-id (get-in s [:layout :canvas-counter])
+                     current-layout (get-in s [:layout :root])
+                     new-layout (model/split-canvas current-layout canvas-id orientation next-id)]
+                 (if (nil? new-layout)
+                   s
+                   (-> s
+                       (assoc-in [:layout :root] new-layout)
+                       (update-in [:layout :canvas-counter] inc)))))))
     
     :remove-canvas
     (let [[canvas-id] args]
-      ;; Note: Canvas removal logic is handled in canvas.view
-      ;; (this is a placeholder for state updates if needed)
-      )
+      (swap! app-state
+             (fn [s]
+               (let [current-layout (get-in s [:layout :root])
+                     new-layout (model/remove-canvas current-layout canvas-id)]
+                 (if (nil? new-layout)
+                   s
+                   (let [remaining-ids (set (canvas-ids new-layout))]
+                     (-> s
+                         (assoc-in [:layout :root] new-layout)
+                         (update-in [:visualizers :instances]
+                                    (fn [m]
+                                      (into {}
+                                            (filter (fn [[id _]] (contains? remaining-ids id)) m)))))))))))
     
     :change-visualizer
     (let [[canvas-id visualizer-type] args]
-      ;; Note: Handled in canvas.view
-      )
+      (swap! app-state
+             (fn [s]
+               (-> s
+                   (update-in [:layout :root] model/change-canvas-visualizer canvas-id visualizer-type)
+                   (assoc-in [:visualizers :instances canvas-id]
+                             {:type visualizer-type
+                              :settings (get-in s [:visualizers :instances canvas-id :settings] {})})))))
     
     :update-visualizer-settings
     (let [[canvas-id settings] args]
-      ;; Note: Handled in canvas.view
-      )
+      (swap! app-state
+             (fn [s]
+               (-> s
+                   (update-in [:layout :root] model/update-canvas-settings canvas-id settings)
+                   (update-in [:visualizers :instances canvas-id :settings]
+                              (fn [existing]
+                                (if (fn? settings)
+                                  (settings (or existing {}))
+                                  (merge (or existing {}) settings))))))))
     
     (do
       (.warn js/console "Unknown action:" action))))

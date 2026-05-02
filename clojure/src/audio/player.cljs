@@ -59,6 +59,8 @@
                         ;; Update app state with audio context
                         (state/dispatch :init-audio audio-context)
                         (state/dispatch :set-sample-rate (interop/get-sample-rate audio-context))
+                        (state/dispatch :set-audio-player player)
+                        (state/dispatch :set-sample-puller sp)
                         
                         (resolve player))))
              (.catch reject)))
@@ -93,8 +95,16 @@
                           (fn []
                             (let [duration (interop/get-audio-element-duration audio-element)]
                               (state/dispatch :set-duration duration))
-                            (remove-property audio-element "onloadedmetadata")
+                            (state/dispatch :set-current-time 0)
+                            (set! (.-onloadedmetadata audio-element) nil)
                             (resolve audio-element)))
+                    (set! (.-ontimeupdate audio-element)
+                          (fn []
+                            (state/dispatch :set-current-time
+                                            (interop/get-audio-element-current-time audio-element))))
+                    (set! (.-onended audio-element)
+                          (fn []
+                            (state/dispatch :set-playing false)))
                     
                     ;; Handle load errors
                     (set! (.-onerror audio-element)
