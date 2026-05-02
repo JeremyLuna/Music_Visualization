@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "shadow-cljs watch app",
     "release": "shadow-cljs release app",
-    "serve": "cd public && python3 -m http.server 8000"
+    "serve": "npm run serve:dev",
+    "serve:dev": "cd public && python3 -m http.server 8000",
+    "serve:release": "npm run release && npm run serve:dev"
   },
   "dependencies": {
     "fftjs": "^0.0.4",

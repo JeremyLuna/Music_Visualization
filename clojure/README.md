@@ -100,7 +100,7 @@ cd clojure
 clj -Ashadow release app
 ```
 
-Output: `public/js/app.js` (optimized & minified)
+Output: `public/js/main.js` (optimized & minified)
 
 ## Implementation Status
 
