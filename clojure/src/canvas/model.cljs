@@ -180,9 +180,10 @@
   (let [canvas (find-node tree canvas-id)]
     (if (nil? canvas)
       tree
-      (let [new-settings (if (fn? settings)
-                           (settings (:settings canvas))
-                           settings)
+      (let [current-settings (or (:settings canvas) {})
+            new-settings (if (fn? settings)
+                           (settings current-settings)
+                           (merge current-settings settings))
             parent-result (find-parent-of-node tree canvas-id)]
         (if (nil? parent-result)
           ;; Canvas is root

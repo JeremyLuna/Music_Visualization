@@ -6,13 +6,14 @@
             [audio.player :as player]
             [app.core :as app-core]
             [visualizers.engine :as viz-engine]
-            [reagent.core :as reagent]))
+            [reagent.dom.client :as reagent-dom-client]))
 
 ;; ============================================================================
 ;; Global Player State
 ;; ============================================================================
 
 (defonce audio-player-instance (atom nil))
+(defonce react-root (atom nil))
 
 ;; ============================================================================
 ;; Initialization Functions
@@ -91,8 +92,9 @@
         (.error js/console "App container (#app) not found in DOM")
         false)
       (do
-        ;; Render the root component
-        (reagent/render [app-core/app-root] app-container)
+        (when (nil? @react-root)
+          (reset! react-root (reagent-dom-client/create-root app-container)))
+        (reagent-dom-client/render @react-root [app-core/app-root])
         true))))
 
 ;; ============================================================================

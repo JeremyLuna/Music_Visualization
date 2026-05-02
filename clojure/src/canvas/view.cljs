@@ -13,15 +13,12 @@
 (defn canvas-element
   "Create a canvas DOM element with sizing."
   [canvas-id]
-  (let [el (r/atom nil)]
+  (let [el-ref (r/atom nil)]
     (r/create-class
      {:component-did-mount
       (fn [this]
-        ;; Store the DOM node so we can use ResizeObserver
-        (reset! el (r/dom-node this))
-        
         ;; Set up ResizeObserver to track canvas size changes
-        (state/dispatch :register-canvas-element canvas-id @el)
+        (state/dispatch :register-canvas-element canvas-id @el-ref)
         (when (exists? js/ResizeObserver)
           (let [observer (js/ResizeObserver.
                          (fn [entries]
@@ -33,7 +30,7 @@
                                    canvas (.-target entry)]
                                (set! (.-width canvas) (int width))
                                (set! (.-height canvas) (int height))))))]
-            (.observe observer @el))))
+            (.observe observer @el-ref))))
 
       :component-will-unmount
       (fn []
@@ -46,7 +43,7 @@
                   :height "100%"
                   :background "white"
                   :border "1px solid #ccc"}
-          :ref (fn [el] (reset! el el))}])})))
+          :ref (fn [el] (reset! el-ref el))}])})))
 
 ;; ============================================================================
 ;; Tree Rendering Components

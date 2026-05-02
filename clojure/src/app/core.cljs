@@ -1,6 +1,6 @@
 (ns app.core
   "Root component and entry point for the Music Visualization app."
-  (:require [reagent.core :as r]
+  (:require [reagent.dom.client :as rdom-client]
             [app.state :as state]
             [canvas.view :as canvas-view]
             [ui.control-panel :as control-panel]))
@@ -29,6 +29,11 @@
 ;; Initialization
 ;; ============================================================================
 
+(defonce root (atom nil))
+
 (defn ^:export init []
   "Initialize and mount the app. Called by Shadow-cljs on page load."
-  (r/render [app-root] (js/document.getElementById "app")))
+  (let [app-container (js/document.getElementById "app")]
+    (when (nil? @root)
+      (reset! root (rdom-client/create-root app-container)))
+    (rdom-client/render @root [app-root])))
