@@ -208,7 +208,7 @@
       ;; Show visualizer settings for each canvas
       (for [canvas-id (canvas-ids-from-layout @layout-root)]
         ^{:key canvas-id}
-        [visualizer-settings canvas-id])]]
+        [visualizer-settings canvas-id])]
      
      ;; Toggle button outside (for hidden state)
      (when-not @show?
