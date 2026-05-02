@@ -4,8 +4,7 @@
    Renders the layout tree as DOM elements with flexbox, canvas elements,
    and interactive controls (split, remove, resize)."
   (:require [reagent.core :as r]
-            [app.state :as state]
-            [canvas.model :as model]))
+            [app.state :as state]))
 
 ;; ============================================================================
 ;; Helper functions
@@ -13,7 +12,7 @@
 
 (defn canvas-element
   "Create a canvas DOM element with sizing."
-  []
+  [canvas-id]
   (let [el (r/atom nil)]
     (r/create-class
      {:component-did-mount
@@ -22,6 +21,7 @@
         (reset! el (r/dom-node this))
         
         ;; Set up ResizeObserver to track canvas size changes
+        (state/dispatch :register-canvas-element canvas-id @el)
         (when (exists? js/ResizeObserver)
           (let [observer (js/ResizeObserver.
                          (fn [entries]
@@ -34,6 +34,10 @@
                                (set! (.-width canvas) (int width))
                                (set! (.-height canvas) (int height))))))]
             (.observe observer @el))))
+
+      :component-will-unmount
+      (fn []
+        (state/dispatch :unregister-canvas-element canvas-id))
       
       :reagent-render
       (fn []
@@ -88,7 +92,7 @@
    ;; Canvas element
    [:div
     {:style {:flex 1 :overflow "hidden"}}
-    [canvas-element]]])
+    [canvas-element canvas-id]]])
 
 (declare layout-tree-view)
 
@@ -172,24 +176,9 @@
       :reagent-render
       (fn []
         (let [on-split (fn [canvas-id orientation]
-                         ;; Get next available ID
-                         (let [next-id (state/get-next-canvas-id)]
-                           ;; Update app state with new layout
-                           (swap! state/app-state
-                                  (fn [app-state]
-                                    (let [current-layout (get-in app-state [:layout :root])
-                                          new-layout (model/split-canvas current-layout canvas-id orientation next-id)]
-                                      (assoc-in app-state [:layout :root] new-layout))))))
-              
+                         (state/dispatch :split-canvas canvas-id orientation))
               on-remove (fn [canvas-id]
-                          ;; Update app state by removing canvas
-                          (swap! state/app-state
-                                 (fn [app-state]
-                                   (let [current-layout (get-in app-state [:layout :root])
-                                         new-layout (model/remove-canvas current-layout canvas-id)]
-                                     (if new-layout
-                                       (assoc-in app-state [:layout :root] new-layout)
-                                       app-state)))))]
+                          (state/dispatch :remove-canvas canvas-id))]
           
           [:div.canvas-manager
            {:style {:display "flex"

@@ -5,6 +5,7 @@
   (:require [app.state :as state]
             [audio.player :as player]
             [app.core :as app-core]
+            [visualizers.engine :as viz-engine]
             [reagent.core :as reagent]))
 
 ;; ============================================================================
@@ -111,6 +112,7 @@
       (.then (fn [player]
                ;; Mount the React app
                (mount-app)
+               (viz-engine/start!)
                (.log js/console "✅ App ready!")))
       (.catch (fn [error]
                 (.error js/console "😞 Startup failed:" error)))))

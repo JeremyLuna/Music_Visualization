@@ -34,7 +34,7 @@
   [visualizer-type & {:as options}]
   (if-let [entry (get visualizer-registry visualizer-type)]
     (let [factory (:factory entry)]
-      (factory options))
+      (apply factory (mapcat identity options)))
     (do
       (.warn js/console "Unknown visualizer type:" visualizer-type)
       nil)))
