@@ -33,7 +33,14 @@ java -version
 
 ## Running the App
 
-### Option 1: Single Command (Recommended)
+## Script Reference
+
+- `npm run dev`: Watches and recompiles ClojureScript for development (`public/js/main.js`).
+- `npm run serve:dev`: Serves static files from `public/` on port 8000.
+- `npm run serve:release`: Builds optimized release output (`public/js/main.js`) and serves it.
+- `npm run serve`: Alias for `serve:dev`.
+
+### Development (Recommended)
 
 ```bash
 cd clojure
@@ -42,14 +49,14 @@ npm run dev
 
 Then in a new terminal:
 ```bash
-npm run serve
+npm run serve:dev
 ```
 
 Open http://localhost:8000 in your browser.
 
 **Note:** The `npm run dev` command watches for file changes and auto-recompiles. Your browser will hot-reload.
 
-### Option 2: Step by Step
+### Development (Step by Step)
 
 **Terminal 1 - Build/Watch:**
 ```bash
@@ -108,7 +115,12 @@ cd clojure
 npm run release
 ```
 
-Output: `public/js/app.js` (optimized & minified, ~50-100KB)
+To serve the release bundle locally:
+```bash
+npm run serve:release
+```
+
+Output: `public/js/main.js` (optimized & minified, ~50-100KB)
 
 ## Deployment to GitHub Pages
 
@@ -147,13 +159,13 @@ Just push to GitHub and check "Actions" tab for build status.
    ```
 
 3. **Verify files were compiled:**
-   - Check `clojure/public/js/app.js` exists and has content
+   - Check `clojure/public/js/main.js` exists and has content
 
-### "Cannot GET /js/app.js"
+### "Cannot GET /js/main.js"
 
 - The dev server isn't running, or
 - You're serving from wrong directory
-- Run `npm run serve` from `clojure/` directory
+- Run `npm run serve:dev` from `clojure/` directory
 
 ### REPL connection fails
 
@@ -166,7 +178,7 @@ Just push to GitHub and check "Actions" tab for build status.
 clojure/
 ├── public/
 │   ├── index.html           # Entry point
-│   ├── js/app.js            # Compiled output (generated)
+│   ├── js/main.js           # Compiled output (generated)
 │   └── sample_processor.js  # AudioWorklet code
 ├── src/
 │   ├── app/

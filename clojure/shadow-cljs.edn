@@ -9,6 +9,6 @@
    :devtools {:http-port 3000
               :http-host "127.0.0.1"}
    :release
-   {:output-to "public/js/app.js"
+   {:output-to "public/js/main.js"
     :output-wrapper false
     :source-map true}}}}
