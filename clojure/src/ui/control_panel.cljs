@@ -176,15 +176,15 @@
         layout-root (r/cursor state/app-state [:layout :root])]
     [:div.control-panel
      {:style {:position "fixed"
-              :right (if @show? "0" "-300px")
+              :left (if @show? "0" "-300px")
               :top 0
               :width "280px"
               :height "100%"
               :background "white"
-              :border-left "1px solid #ccc"
-              :box-shadow "-2px 0 8px rgba(0,0,0,0.1)"
+              :border-right "1px solid #ccc"
+              :box-shadow "2px 0 8px rgba(0,0,0,0.1)"
               :overflow-y "auto"
-              :transition "right 0.3s ease"
+              :transition "left 0.3s ease"
               :z-index 100}}
      
      ;; Header with toggle button
@@ -215,7 +215,7 @@
        [:button
         {:on-click #(state/dispatch :toggle-control-panel)
          :style {:position "fixed"
-                 :right "10px"
+                 :left "10px"
                  :bottom "20px"
                  :width "50px"
                  :height "50px"
