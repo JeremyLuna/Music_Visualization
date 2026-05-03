@@ -5,6 +5,7 @@
    and interactive controls (split, remove, resize)."
   (:require [reagent.core :as r]
             [app.state :as state]
+            [app.theme :as theme]
             [canvas.model :as model]))
 
 ;; ============================================================================
@@ -62,11 +63,13 @@
       
       :reagent-render
       (fn [_canvas-id]
-        [:canvas
-         {:style {:width "100%"
-                  :height "100%"
-                  :background "white"}
-          :ref (fn [el] (reset! el-ref el))}])})))
+        (let [theme (get-in @state/app-state [:ui :theme])
+              colors (theme/colors theme)]
+          [:canvas
+           {:style {:width "100%"
+                    :height "100%"
+                    :background (:canvas-background colors)}
+            :ref (fn [el] (reset! el-ref el))}]))})))
 
 ;; ============================================================================
 ;; Tree Rendering Components
@@ -75,64 +78,72 @@
 (defn canvas-node-view
   "Render a single canvas node with controls."
   [canvas-id canvas-node on-split on-remove can-remove? ui-visible?]
-  [:div.canvas-node
-   {:style {:display "flex"
-            :flex-direction "column"
-            :height "100%"
-            :width "100%"
-            :position "relative"}}
-   
-   ;; Canvas toolbar
-   [:div.canvas-toolbar
-    {:style {:background "#f0f0f0"
-             :padding "5px"
-             :border-bottom "1px solid #ccc"
-             :display "flex"
-             :align-items "center"
-             :gap "5px"
-             :font-size "12px"
-             :position "absolute"
-             :top 0
-             :left 0
-             :right 0
-             :z-index 10
-             :opacity (if ui-visible? 1 0)
-             :pointer-events (if ui-visible? "auto" "none")
-             :transition "opacity 0.2s ease"}}
-    
-    [:span
-     {:style {:position "absolute"
-              :left "50%"
-              :transform "translateX(-50%)"}}
-     (str "Canvas " canvas-id)]
-    
-    [:div
-     {:style {:margin-left "auto"
-              :display "flex"
-              :gap "5px"}}
-     [:button
-      {:on-click #(on-split canvas-id :h)
-       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
-      "↔"]
-     
-     [:button
-      {:on-click #(on-split canvas-id :v)
-       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
-      "↕"]
-     
-     (when can-remove?
+  (let [theme (get-in @state/app-state [:ui :theme])
+        colors (theme/colors theme)
+        toolbar-button-style (merge (theme/button-style theme)
+                                    {:padding "3px 8px"
+                                     :font-size "11px"})]
+    [:div.canvas-node
+     {:style {:display "flex"
+              :flex-direction "column"
+              :height "100%"
+              :width "100%"
+              :position "relative"
+              :background (:canvas-background colors)}}
+
+     ;; Canvas toolbar
+     [:div.canvas-toolbar
+      {:style {:background (:surface-muted colors)
+               :color (:text colors)
+               :padding "5px"
+               :border-bottom (str "1px solid " (:border colors))
+               :display "flex"
+               :align-items "center"
+               :gap "5px"
+               :font-size "12px"
+               :position "absolute"
+               :top 0
+               :left 0
+               :right 0
+               :z-index 10
+               :opacity (if ui-visible? 1 0)
+               :pointer-events (if ui-visible? "auto" "none")
+               :transition "opacity 0.2s ease"}}
+
+      [:span
+       {:style {:position "absolute"
+                :left "50%"
+                :transform "translateX(-50%)"}}
+       (str "Canvas " canvas-id)]
+
+      [:div
+       {:style {:margin-left "auto"
+                :display "flex"
+                :gap "5px"}}
        [:button
-        {:on-click #(on-remove canvas-id)
-         :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"
-                 :background "#ff6b6b" :color "white"}}
-        "x"])]]
-   
-   ;; Canvas element
-   [:div
-    {:style {:position "absolute"
-             :inset 0
-             :overflow "hidden"}}
-    [canvas-element canvas-id]]])
+        {:on-click #(on-split canvas-id :h)
+         :style toolbar-button-style}
+        "↔"]
+
+       [:button
+        {:on-click #(on-split canvas-id :v)
+         :style toolbar-button-style}
+        "↕"]
+
+       (when can-remove?
+         [:button
+          {:on-click #(on-remove canvas-id)
+           :style (merge (theme/button-style theme :danger)
+                         {:padding "3px 8px"
+                          :font-size "11px"})}
+          "x"])]]
+
+     ;; Canvas element
+     [:div
+      {:style {:position "absolute"
+               :inset 0
+               :overflow "hidden"}}
+      [canvas-element canvas-id]]]))
 
 (declare layout-tree-view)
 
@@ -179,6 +190,7 @@
           is-horizontal? (= orientation :h)
           cursor (if is-horizontal? "col-resize" "row-resize")
           flex-direction (if is-horizontal? "row" "column")
+          colors (theme/colors (get-in @state/app-state [:ui :theme]))
           end-drag! (fn [event]
                       (when @dragging?
                         (reset! dragging? false)
@@ -207,7 +219,7 @@
 
        ;; Splitter divider. The visible rule is 2px; the child hit area is wider.
        [:div
-        {:style {:background "#ddd"
+        {:style {:background (:splitter colors)
                  :cursor cursor
                  :width (if is-horizontal? "2px" "100%")
                  :height (if is-horizontal? "100%" "2px")
@@ -254,7 +266,8 @@
   [node on-split on-remove can-remove? ui-visible?]
   (cond
     (nil? node) 
-    [:div {:style {:flex 1 :background "#f0f0f0"}} "Empty layout"]
+    (let [colors (theme/colors (get-in @state/app-state [:ui :theme]))]
+      [:div {:style {:flex 1 :background (:surface-muted colors) :color (:muted-text colors)}} "Empty layout"])
     
     (= (:type node) :canvas)
     ^{:key (str "canvas-" (:id node))}
@@ -265,7 +278,8 @@
     [split-node-view node on-split on-remove can-remove? ui-visible?]
     
     :else
-    [:div {:style {:flex 1 :background "#f0f0f0"}} "Unknown node type"]))
+    (let [colors (theme/colors (get-in @state/app-state [:ui :theme]))]
+      [:div {:style {:flex 1 :background (:surface-muted colors) :color (:muted-text colors)}} "Unknown node type"])))
 
 ;; ============================================================================
 ;; Main Canvas Manager Component
@@ -299,7 +313,8 @@
               can-remove? (> (model/count-canvases @layout-atom) 1)
               show-control-panel? (get-in @state/app-state [:ui :show-control-panel])
               interaction-active? (get-in @state/app-state [:ui :interaction-active])
-              ui-visible? (or show-control-panel? interaction-active?)]
+              ui-visible? (or show-control-panel? interaction-active?)
+              colors (theme/colors (get-in @state/app-state [:ui :theme]))]
           
           [:div.canvas-manager
            {:style {:display "flex"
@@ -307,5 +322,6 @@
                     :overflow "hidden"
                     :height "100%"
                     :width "100%"
+                    :background (:app-background colors)
                     :cursor (if ui-visible? "auto" "none")}}
            [layout-tree-view @layout-atom on-split on-remove can-remove? ui-visible?]]))})))

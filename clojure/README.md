@@ -168,6 +168,7 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
+- Move volume slider to Player section and make each section collapsible
 - Use color themes (which can be overridden)
 - have square, and rounded square theme
 - Add swapping behavior for dividers

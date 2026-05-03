@@ -13,9 +13,13 @@
 (def default-settings
   {:fft-size 1024
    :hop-size nil
-   :color-map :gray
+   :color-map :theme
    :min-db -100
-   :max-db 0})
+   :max-db 0
+   :spectrogram-background-color "black"
+   :spectrogram-low-color "#000000"
+   :spectrogram-mid-color "#666666"
+   :spectrogram-high-color "#ffffff"})
 
 (defn- effective-settings
   [settings]
@@ -162,18 +166,57 @@
 ;; Drawing
 ;; ============================================================================
 
+(defn- hex->rgb
+  [hex-color]
+  (let [value (if (and (string? hex-color) (= (first hex-color) "#"))
+                (subs hex-color 1)
+                hex-color)
+        full-value (if (= (count value) 3)
+                     (apply str (mapcat #(repeat 2 %) value))
+                     value)
+        n (js/parseInt full-value 16)]
+    (if (js/isNaN n)
+      [0 0 0]
+      [(bit-and (bit-shift-right n 16) 255)
+       (bit-and (bit-shift-right n 8) 255)
+       (bit-and n 255)])))
+
+(defn- mix-channel
+  [a b t]
+  (int (+ a (* (- b a) t))))
+
+(defn- mix-rgb
+  [[r1 g1 b1] [r2 g2 b2] t]
+  [(mix-channel r1 r2 t)
+   (mix-channel g1 g2 t)
+   (mix-channel b1 b2 t)])
+
+(defn- theme-color-for
+  [intensity low-color mid-color high-color]
+  (let [t (/ intensity 255)
+        low (hex->rgb low-color)
+        mid (hex->rgb mid-color)
+        high (hex->rgb high-color)]
+    (if (< t 0.5)
+      (mix-rgb low mid (* t 2))
+      (mix-rgb mid high (* (- t 0.5) 2)))))
+
 (defn- color-for
-  [intensity color-map]
+  [intensity {:keys [color-map spectrogram-low-color spectrogram-mid-color spectrogram-high-color]}]
   (case color-map
     :hot (cond
            (< intensity 85) [(* intensity 3) 0 0]
            (< intensity 170) [255 (* (- intensity 85) 3) 0]
            :else [255 255 (* (- intensity 170) 3)])
     :gray [intensity intensity intensity]
+    :theme (theme-color-for intensity
+                            spectrogram-low-color
+                            spectrogram-mid-color
+                            spectrogram-high-color)
     [intensity intensity intensity]))
 
 (defn- draw-spectrogram-column!
-  [canvas-element mags {:keys [color-map min-db max-db]}]
+  [canvas-element mags {:keys [min-db max-db] :as settings}]
   (let [ctx (interop/get-canvas-context canvas-element)
         width (interop/get-canvas-width canvas-element)
         height (interop/get-canvas-height canvas-element)
@@ -189,18 +232,25 @@
                 db (* 20 (js/Math.log10 (max mag 1.0e-12)))
                 norm (clamp (/ (- db min-db) db-range) 0 1)
                 intensity (int (* norm 255))
-                [r g b] (color-for intensity color-map)
+                [r g b] (color-for intensity settings)
                 y (* (- bin-count 1 i) bin-height)]
             (set! (.-fillStyle ctx) (str "rgb(" r "," g "," b ")"))
             (.fillRect ctx column-x y 1 (max 1 bin-height))))))))
 
 (defn- clear-canvas!
-  [canvas-element]
+  [canvas-element background-color]
   (let [ctx (interop/get-canvas-context canvas-element)
         width (interop/get-canvas-width canvas-element)
         height (interop/get-canvas-height canvas-element)]
-    (set! (.-fillStyle ctx) "black")
+    (set! (.-fillStyle ctx) background-color)
     (.fillRect ctx 0 0 width height)))
+
+(def color-setting-keys
+  [:color-map
+   :spectrogram-background-color
+   :spectrogram-low-color
+   :spectrogram-mid-color
+   :spectrogram-high-color])
 
 ;; ============================================================================
 ;; STFT Visualizer Record and Implementation
@@ -216,20 +266,19 @@
   protocol/IVisualizer
 
   (render [this canvas-element sample-puller]
-    (let [{:keys [fft-size hop-size] :as eff-settings} (effective-settings settings)
+    (let [{:keys [fft-size hop-size spectrogram-background-color] :as eff-settings} (effective-settings settings)
           canvas-width (interop/get-canvas-width canvas-element)
           canvas-height (interop/get-canvas-height canvas-element)
           canvas-size [canvas-width canvas-height]]
       (when (and (power-of-two? fft-size) (pos? canvas-width) (pos? canvas-height))
         (when (not= @last-canvas-size canvas-size)
           (reset! last-canvas-size canvas-size)
-          (when (nil? @last-canvas-size)
-            (clear-canvas! canvas-element)))
+          (clear-canvas! canvas-element spectrogram-background-color))
         (when (not= (:fft-size @window-state) fft-size)
           (reset! window-state {:fft-size fft-size
                                 :window (make-window fft-size)})
           (set! (.-length @sample-buffer) 0)
-          (clear-canvas! canvas-element))
+          (clear-canvas! canvas-element spectrogram-background-color))
         (let [current-totals (current-sample-totals sample-puller)]
           (if (or (nil? @last-sample-totals)
                   (some true? (map < current-totals @last-sample-totals)))
@@ -257,6 +306,9 @@
         (reset! window-state nil)
         (reset! last-sample-totals nil)
         (reset! last-canvas-size nil))
+      (when (not= (select-keys old-settings color-setting-keys)
+                  (select-keys next-effective color-setting-keys))
+        (reset! last-canvas-size nil))
       (assoc this :settings next-settings)))
 
   (get-settings [this]
@@ -270,14 +322,22 @@
    - color-map: Color scheme keyword (default :gray)
 
    Returns: STFTVisualizer instance"
-  [& {:keys [fft-size hop-size color-map min-db max-db]}]
+  [& {:keys [fft-size hop-size color-map min-db max-db
+             spectrogram-background-color
+             spectrogram-low-color
+             spectrogram-mid-color
+             spectrogram-high-color]}]
   (->STFTVisualizer
    (cond-> {}
      (some? fft-size) (assoc :fft-size fft-size)
      (some? hop-size) (assoc :hop-size hop-size)
      (some? color-map) (assoc :color-map color-map)
      (some? min-db) (assoc :min-db min-db)
-     (some? max-db) (assoc :max-db max-db))
+     (some? max-db) (assoc :max-db max-db)
+     (some? spectrogram-background-color) (assoc :spectrogram-background-color spectrogram-background-color)
+     (some? spectrogram-low-color) (assoc :spectrogram-low-color spectrogram-low-color)
+     (some? spectrogram-mid-color) (assoc :spectrogram-mid-color spectrogram-mid-color)
+     (some? spectrogram-high-color) (assoc :spectrogram-high-color spectrogram-high-color))
    (atom (array))
    (atom nil)
    (atom nil)

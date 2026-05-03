@@ -20,6 +20,7 @@
     :visualizers {:instances {}  ;; {canvas-id -> visualizer instance}}
     :samples {:channels {}}})"
   (:require [reagent.core :as r]
+            [app.theme :as theme]
             [canvas.model :as model]))
 
 ;; Central application state atom
@@ -41,7 +42,8 @@
              :canvas-counter 1}
     :ui {:show-control-panel false
          :interaction-active true
-         :settings {}}
+         :settings {}
+         :theme theme/default-theme}
     :visualizers {:instances {}}
     :canvas-elements {}
     :samples {:channels {}}}))
@@ -96,6 +98,25 @@
     :set-interaction-active
     (let [[active?] args]
       (swap! app-state assoc-in [:ui :interaction-active] active?))
+
+    :set-theme-palette
+    (let [[palette-id] args]
+      (swap! app-state
+             (fn [s]
+               (let [current-theme (get-in s [:ui :theme])
+                     custom-colors (get current-theme :custom-colors {})]
+                 (cond-> (assoc-in s [:ui :theme :palette] palette-id)
+                   (and (= palette-id :custom) (empty? custom-colors))
+                   (assoc-in [:ui :theme :custom-colors]
+                             (theme/colors current-theme)))))))
+
+    :set-theme-shape
+    (let [[shape] args]
+      (swap! app-state assoc-in [:ui :theme :shape] shape))
+
+    :set-theme-custom-color
+    (let [[color-key color-value] args]
+      (swap! app-state assoc-in [:ui :theme :custom-colors color-key] color-value))
 
     :register-canvas-element
     (let [[canvas-id canvas-el] args]

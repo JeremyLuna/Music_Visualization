@@ -3,6 +3,7 @@
   (:require [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
             [app.state :as state]
+            [app.theme :as theme]
             [canvas.view :as canvas-view]
             [ui.control-panel :as control-panel]))
 
@@ -49,14 +50,23 @@
         (clear-timeout!))
       :reagent-render
       (fn []
-        [:div {:style {:display "flex" :flex-direction "column" :height "100vh" :font-family "sans-serif"}}
+        (let [colors (theme/colors (get-in @state/app-state [:ui :theme]))]
+          [:div {:style {:display "flex"
+                         :flex-direction "column"
+                         :height "100vh"
+                         :font-family "sans-serif"
+                         :background (:app-background colors)
+                         :color (:text colors)}}
          [:div {:style {:display "flex" :flex 1 :overflow "hidden"}}
           ;; Main content: Canvas area (full width)
-          [:div {:style {:flex 1 :overflow "auto" :background "#f5f5f5" :position "relative"}}
+          [:div {:style {:flex 1
+                         :overflow "auto"
+                         :background (:app-background colors)
+                         :position "relative"}}
            [canvas-view/canvas-manager]]]
 
          ;; Control panel (side panel)
-         [control-panel/control-panel]])})))
+         [control-panel/control-panel]]))})))
 
 ;; ============================================================================
 ;; Initialization
