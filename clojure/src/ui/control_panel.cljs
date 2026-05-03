@@ -31,10 +31,6 @@
   []
   (get-in @state/app-state [:ui :theme]))
 
-(defn- current-colors
-  []
-  (theme/colors (current-theme)))
-
 (defn- section-style
   [theme]
   (let [colors (theme/colors theme)]
@@ -65,6 +61,19 @@
 (defn- reset-visualizer-setting!
   [canvas-id setting-key]
   (state/dispatch :update-visualizer-settings canvas-id #(dissoc % setting-key)))
+
+(defn- theme-color-label
+  [color-key]
+  (case color-key
+    :background "Background"
+    :surface "Surface"
+    :text "Text"
+    :primary "Primary"
+    :danger "Danger"
+    :visualizer-a "Visualizer 1"
+    :visualizer-b "Visualizer 2"
+    :visualizer-c "Visualizer 3"
+    (-> color-key name (.replaceAll "-" " "))))
 
 (defn- color-setting-row
   [canvas-id settings effective-settings setting-key label]
@@ -217,7 +226,7 @@
                          :gap "6px"
                          :margin-bottom "6px"}}
            [:label {:style {:color (:text colors)}}
-            (-> color-key name (.replaceAll "-" " "))]
+            (theme-color-label color-key)]
            [:input {:type "color"
                     :value (get colors color-key)
                     :style {:width "44px"

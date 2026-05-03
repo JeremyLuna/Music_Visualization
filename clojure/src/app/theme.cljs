@@ -2,114 +2,123 @@
   "Theme palettes and helpers for UI and visualizer styling.")
 
 (def palette-color-keys
-  [:app-background
-   :panel-background
-   :panel-header
+  [:background
    :surface
-   :surface-muted
    :text
-   :muted-text
-   :border
    :primary
-   :primary-text
    :danger
-   :canvas-background
-   :splitter
-   :waveform-line
-   :waveform-baseline
-   :spectrogram-low
-   :spectrogram-mid
-   :spectrogram-high])
+   :visualizer-a
+   :visualizer-b
+   :visualizer-c])
 
 (def palettes
   {:studio
    {:name "Studio"
-    :colors {:app-background "#f4f6f8"
-             :panel-background "#ffffff"
-             :panel-header "#eef2f5"
+    :colors {:background "#f4f6f8"
              :surface "#ffffff"
-             :surface-muted "#edf1f4"
              :text "#18212b"
-             :muted-text "#667280"
-             :border "#ccd5de"
              :primary "#287d74"
-             :primary-text "#ffffff"
              :danger "#c94643"
-             :canvas-background "#ffffff"
-             :splitter "#cfd8e1"
-             :waveform-line "#16a085"
-             :waveform-baseline "#c8d1da"
-             :spectrogram-low "#071013"
-             :spectrogram-mid "#1f8f99"
-             :spectrogram-high "#f4d35e"}}
+             :visualizer-a "#16a085"
+             :visualizer-b "#1f8f99"
+             :visualizer-c "#f4d35e"}}
 
    :night-drive
    {:name "Night Drive"
-    :colors {:app-background "#101820"
-             :panel-background "#17212b"
-             :panel-header "#202d38"
-             :surface "#202d38"
-             :surface-muted "#263644"
+    :colors {:background "#05080d"
+             :surface "#17212b"
              :text "#eef5f8"
-             :muted-text "#9fb1bc"
-             :border "#3a4d5e"
              :primary "#ffb703"
-             :primary-text "#101820"
              :danger "#ef476f"
-             :canvas-background "#05080d"
-             :splitter "#384958"
-             :waveform-line "#8ecae6"
-             :waveform-baseline "#2e4c5f"
-             :spectrogram-low "#05080d"
-             :spectrogram-mid "#219ebc"
-             :spectrogram-high "#fb8500"}}
+             :visualizer-a "#8ecae6"
+             :visualizer-b "#219ebc"
+             :visualizer-c "#fb8500"}}
 
    :aurora
    {:name "Aurora"
-    :colors {:app-background "#14213d"
-             :panel-background "#1f2d4a"
-             :panel-header "#263859"
-             :surface "#263859"
-             :surface-muted "#304769"
+    :colors {:background "#0b1324"
+             :surface "#1f2d4a"
              :text "#f8fafc"
-             :muted-text "#b8c3d1"
-             :border "#49607d"
              :primary "#66d9a4"
-             :primary-text "#102019"
              :danger "#ff6b6b"
-             :canvas-background "#0b1324"
-             :splitter "#435775"
-             :waveform-line "#66d9a4"
-             :waveform-baseline "#37516a"
-             :spectrogram-low "#0b1324"
-             :spectrogram-mid "#7c3aed"
-             :spectrogram-high "#f8e16c"}}
+             :visualizer-a "#66d9a4"
+             :visualizer-b "#7c3aed"
+             :visualizer-c "#f8e16c"}}
 
    :paper
    {:name "Paper"
-    :colors {:app-background "#f8f7f3"
-             :panel-background "#fffefa"
-             :panel-header "#efede6"
+    :colors {:background "#f8f7f3"
              :surface "#fffefa"
-             :surface-muted "#ebe8df"
              :text "#24211c"
-             :muted-text "#706a5f"
-             :border "#d5d0c4"
              :primary "#386641"
-             :primary-text "#ffffff"
              :danger "#bc4749"
-             :canvas-background "#fffefa"
-             :splitter "#d1cabd"
-             :waveform-line "#6a994e"
-             :waveform-baseline "#d6d1c8"
-             :spectrogram-low "#1f1b16"
-             :spectrogram-mid "#a7c957"
-             :spectrogram-high "#f2e8cf"}}})
+             :visualizer-a "#6a994e"
+             :visualizer-b "#a7c957"
+             :visualizer-c "#f2e8cf"}}})
 
 (def default-theme
   {:palette :studio
    :shape :rounded
    :custom-colors {}})
+
+(defn- clamp-channel
+  [value]
+  (-> value
+      (max 0)
+      (min 255)
+      (js/Math.round)
+      int))
+
+(defn- hex->rgb
+  [hex-color]
+  (let [value (if (and (string? hex-color) (= (first hex-color) "#"))
+                (subs hex-color 1)
+                hex-color)
+        full-value (if (= (count value) 3)
+                     (apply str (mapcat #(repeat 2 %) value))
+                     value)
+        n (js/parseInt full-value 16)]
+    (if (js/isNaN n)
+      [0 0 0]
+      [(bit-and (bit-shift-right n 16) 255)
+       (bit-and (bit-shift-right n 8) 255)
+       (bit-and n 255)])))
+
+(defn- channel->hex
+  [value]
+  (let [hex (.toString (clamp-channel value) 16)]
+    (if (= (count hex) 1)
+      (str "0" hex)
+      hex)))
+
+(defn- rgb->hex
+  [[r g b]]
+  (str "#" (channel->hex r) (channel->hex g) (channel->hex b)))
+
+(defn- mix-channel
+  [a b amount]
+  (+ a (* (- b a) amount)))
+
+(defn- mix-rgb
+  [[r1 g1 b1] [r2 g2 b2] amount]
+  [(mix-channel r1 r2 amount)
+   (mix-channel g1 g2 amount)
+   (mix-channel b1 b2 amount)])
+
+(defn- mix
+  [from-color to-color amount]
+  (rgb->hex (mix-rgb (hex->rgb from-color) (hex->rgb to-color) amount)))
+
+(defn- relative-lightness
+  [hex-color]
+  (let [[r g b] (hex->rgb hex-color)]
+    (/ (+ (* 0.299 r) (* 0.587 g) (* 0.114 b)) 255)))
+
+(defn- readable-on
+  [hex-color]
+  (if (> (relative-lightness hex-color) 0.62)
+    "#101820"
+    "#ffffff"))
 
 (defn palette-options
   []
@@ -123,15 +132,48 @@
   [palette-id]
   (get-in palettes [palette-id :colors] (get-in palettes [:studio :colors])))
 
-(defn effective-theme
+(defn editable-colors
   [theme]
   (let [theme (merge default-theme (or theme {}))
         palette-id (:palette theme)
         base-colors (if (= palette-id :custom)
                       (palette-colors :studio)
                       (palette-colors palette-id))]
+    (select-keys (merge base-colors (:custom-colors theme))
+                 palette-color-keys)))
+
+(defn- expanded-colors
+  [editable]
+  (let [{:keys [background surface text primary danger
+                visualizer-a visualizer-b visualizer-c]} editable
+        muted-text (mix text background 0.42)
+        border (mix text background 0.78)
+        surface-muted (mix surface text 0.08)]
+    (merge editable
+           {:app-background background
+            :panel-background surface
+            :panel-header (mix surface background 0.45)
+            :surface-muted surface-muted
+            :muted-text muted-text
+            :border border
+            :primary-text (readable-on primary)
+            :canvas-background background
+            :splitter (mix text background 0.72)
+            :danger danger
+            :visualizer-background background
+            :visualizer-baseline (mix background visualizer-a 0.28)
+            :visualizer-low (mix background visualizer-b 0.16)
+            :visualizer-mid visualizer-b
+            :visualizer-high (mix visualizer-c "#ffffff" 0.22)})))
+
+(defn effective-theme
+  [theme]
+  (let [theme (merge default-theme (or theme {}))
+        editable (editable-colors theme)]
     (assoc theme
-           :colors (merge base-colors (:custom-colors theme)))))
+           :custom-colors (select-keys (:custom-colors theme) palette-color-keys)
+           :editable-colors editable
+           :colors (expanded-colors editable))))
 
 (defn colors
   [theme]
@@ -182,11 +224,11 @@
 (defn visualizer-settings
   [theme]
   (let [c (colors theme)]
-    {:background-color (:canvas-background c)
-     :baseline-color (:waveform-baseline c)
-     :line-color (:waveform-line c)
-     :spectrogram-background-color (:canvas-background c)
-     :spectrogram-low-color (:spectrogram-low c)
-     :spectrogram-mid-color (:spectrogram-mid c)
-     :spectrogram-high-color (:spectrogram-high c)
+    {:background-color (:visualizer-background c)
+     :baseline-color (:visualizer-baseline c)
+     :line-color (:visualizer-a c)
+     :spectrogram-background-color (:visualizer-background c)
+     :spectrogram-low-color (:visualizer-low c)
+     :spectrogram-mid-color (:visualizer-mid c)
+     :spectrogram-high-color (:visualizer-high c)
      :color-map :theme}))

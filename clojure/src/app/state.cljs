@@ -108,7 +108,7 @@
                  (cond-> (assoc-in s [:ui :theme :palette] palette-id)
                    (and (= palette-id :custom) (empty? custom-colors))
                    (assoc-in [:ui :theme :custom-colors]
-                             (theme/colors current-theme)))))))
+                             (theme/editable-colors current-theme)))))))
 
     :set-theme-shape
     (let [[shape] args]
