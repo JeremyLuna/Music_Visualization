@@ -33,7 +33,9 @@
              audio-element (js/document.createElement "audio")
              _ (set! (.-crossOrigin audio-element) "anonymous")
              
-             ;; Create audio graph: audio-element -> media-source -> gain -> destination
+             ;; Create audio graph:
+             ;; - audio-element -> media-source -> gain -> destination
+             ;; - media-source -> worklet sample capture
              media-source (interop/create-media-element-source audio-context audio-element)
              gain-node (interop/create-gain-node audio-context)
              
@@ -47,8 +49,9 @@
          ;; Now load the AudioWorklet for sample capture
          (-> (interop/create-audio-worklet audio-context "/sample_processor.js" "sample-processor")
              (.then (fn [worklet-node]
-                      ;; Connect worklet to gain node (for monitoring/analysis)
-                      (interop/connect-nodes gain-node worklet-node)
+                      ;; Capture samples before speaker gain so playback volume
+                      ;; does not change visualization amplitude.
+                      (interop/connect-nodes media-source worklet-node)
                       
                       ;; Create sample puller
                       (let [sp (puller/create-sample-puller worklet-node 2 :max-buffer-size 8192)
