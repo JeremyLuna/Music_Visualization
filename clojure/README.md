@@ -182,7 +182,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Known Gaps / Next Steps
 
-- Make play/pause toggle
 - make canvas dividers thinner
 - Use themes (which can be overridden)
 - have square and rounded theme
