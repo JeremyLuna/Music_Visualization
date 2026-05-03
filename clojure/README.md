@@ -168,7 +168,17 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
+- scroll bar and sliders should be squarable
 - Add swapping behavior for dividers
+- squareness should be part of theme
+- Work on themes
+- add analytic signal
+- adjustable range for spectrogram
+- and constant q transform
+    - route to multi-oscilloscope
+    - route to multi-analytic signal
+- add levels bars / plot
+- add spiral levels visualization
 - Production deployment is not wired in this directory.
 - add "load demo" button with copyright free song?
 
