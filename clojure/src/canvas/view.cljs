@@ -4,7 +4,8 @@
    Renders the layout tree as DOM elements with flexbox, canvas elements,
    and interactive controls (split, remove, resize)."
   (:require [reagent.core :as r]
-            [app.state :as state]))
+            [app.state :as state]
+            [canvas.model :as model]))
 
 ;; ============================================================================
 ;; Helper functions
@@ -51,7 +52,7 @@
 
 (defn canvas-node-view
   "Render a single canvas node with controls."
-  [canvas-id canvas-node on-split on-remove]
+  [canvas-id canvas-node on-split on-remove can-remove?]
   [:div.canvas-node
    {:style {:display "flex"
             :flex-direction "column"
@@ -90,11 +91,12 @@
        :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
       "↕"]
      
-     [:button
-      {:on-click #(on-remove canvas-id)
-       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"
-               :background "#ff6b6b" :color "white"}}
-      "x"]]]
+     (when can-remove?
+       [:button
+        {:on-click #(on-remove canvas-id)
+         :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"
+                 :background "#ff6b6b" :color "white"}}
+        "x"])]]
    
    ;; Canvas element
    [:div
@@ -105,7 +107,7 @@
 
 (defn split-node-view
   "Render a split node with two sub-trees and a splitter."
-  [split-node on-split on-remove]
+  [split-node on-split on-remove can-remove?]
   (let [orientation (:orientation split-node)
         is-horizontal? (= orientation :h)
         flex-direction (if is-horizontal? "row" "column")]
@@ -122,7 +124,7 @@
                :overflow "hidden"
                :min-width "100px"
                :min-height "100px"}}
-      [layout-tree-view (:left split-node) on-split on-remove]]
+      [layout-tree-view (:left split-node) on-split on-remove can-remove?]]
      
      ;; Splitter divider
      [:div
@@ -139,20 +141,20 @@
                :overflow "hidden"
                :min-width "100px"
                :min-height "100px"}}
-      [layout-tree-view (:right split-node) on-split on-remove]]]))
+      [layout-tree-view (:right split-node) on-split on-remove can-remove?]]]))
 
 (defn layout-tree-view
   "Recursively render the layout tree."
-  [node on-split on-remove]
+  [node on-split on-remove can-remove?]
   (cond
     (nil? node) 
     [:div {:style {:flex 1 :background "#f0f0f0"}} "Empty layout"]
     
     (= (:type node) :canvas)
-    [canvas-node-view (:id node) node on-split on-remove]
+    [canvas-node-view (:id node) node on-split on-remove can-remove?]
     
     (= (:type node) :split)
-    [split-node-view node on-split on-remove]
+    [split-node-view node on-split on-remove can-remove?]
     
     :else
     [:div {:style {:flex 1 :background "#f0f0f0"}} "Unknown node type"]))
@@ -185,7 +187,8 @@
         (let [on-split (fn [canvas-id orientation]
                          (state/dispatch :split-canvas canvas-id orientation))
               on-remove (fn [canvas-id]
-                          (state/dispatch :remove-canvas canvas-id))]
+                          (state/dispatch :remove-canvas canvas-id))
+              can-remove? (> (model/count-canvases @layout-atom) 1)]
           
           [:div.canvas-manager
            {:style {:display "flex"
@@ -193,4 +196,4 @@
                     :overflow "hidden"
                     :height "100%"
                     :width "100%"}}
-           [layout-tree-view @layout-atom on-split on-remove]]))})))
+           [layout-tree-view @layout-atom on-split on-remove can-remove?]]))})))
