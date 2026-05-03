@@ -56,21 +56,42 @@
         (find-node (:right tree) id))
     :else nil))
 
+(defn- find-canvas-path
+  "Find the path to a canvas node by ID.
+
+   Returns a vector of tree keys, such as [:left :right], or nil if not found."
+  ([tree id]
+   (find-canvas-path tree id []))
+  ([tree id path]
+   (cond
+     (nil? tree) nil
+     (and (= (:type tree) :canvas)
+          (= (:id tree) id)) path
+     (= (:type tree) :split)
+     (or (find-canvas-path (:left tree) id (conj path :left))
+         (find-canvas-path (:right tree) id (conj path :right)))
+     :else nil)))
+
+(defn- node-at-path
+  [tree path]
+  (if (empty? path)
+    tree
+    (get-in tree path)))
+
+(defn- replace-at-path
+  [tree path replacement]
+  (if (empty? path)
+    replacement
+    (assoc-in tree path replacement)))
+
 (defn find-parent-of-node
   "Find the parent of a node with the given ID.
    
    Returns: [parent-node child-key] where child-key is :left or :right, or nil if not found"
   [tree target-id]
-  (cond
-    (nil? tree) nil
-    (= (:type tree) :split)
-    (if (= (get-in tree [:left :id]) target-id)
-      [tree :left]
-      (if (= (get-in tree [:right :id]) target-id)
-        [tree :right]
-        (or (find-parent-of-node (:left tree) target-id)
-            (find-parent-of-node (:right tree) target-id))))
-    :else nil))
+  (when-let [path (find-canvas-path tree target-id)]
+    (when (seq path)
+      [(node-at-path tree (pop path)) (peek path)])))
 
 (defn get-all-canvas-ids
   "Get a list of all canvas IDs in the tree."
@@ -114,22 +135,12 @@
    
    Returns: New tree with the canvas split, or nil if canvas-id not found"
   [tree canvas-id orientation new-canvas-id]
-  (let [target (find-node tree canvas-id)]
-    (if (nil? target)
-      nil
-      (let [parent-result (find-parent-of-node tree canvas-id)]
-        (if (nil? parent-result)
-          ;; Target is the root - replace it with a split containing old and new
-          (create-split-node orientation
-                             target
-                             (create-canvas-node new-canvas-id :waveform {}))
-          ;; Target is not root - replace it in the parent
-          (let [[parent child-key] parent-result
-                new-split (create-split-node orientation
-                                              target
-                                              (create-canvas-node new-canvas-id :waveform {}))
-                new-tree (assoc-in tree [child-key] new-split)]
-            new-tree))))))
+  (when-let [target-path (find-canvas-path tree canvas-id)]
+    (let [target (node-at-path tree target-path)
+          new-split (create-split-node orientation
+                                       target
+                                       (create-canvas-node new-canvas-id :waveform {}))]
+      (replace-at-path tree target-path new-split))))
 
 (defn remove-canvas
   "Remove a canvas from the tree.
@@ -142,30 +153,27 @@
    
    Returns: New tree with canvas removed, or nil if canvas-id not found or is the last canvas"
   [tree canvas-id]
-  (let [parent-result (find-parent-of-node tree canvas-id)
+  (let [canvas-path (find-canvas-path tree canvas-id)
         all-canvas-ids (get-all-canvas-ids tree)]
     
     (cond
       ;; Canvas not found
-      (nil? parent-result) nil
+      (nil? canvas-path) nil
       
       ;; Can't remove the only canvas
       (= (count all-canvas-ids) 1) nil
+
+      ;; A root canvas can only be the only canvas, but keep the shape explicit.
+      (empty? canvas-path) nil
       
       ;; Remove from parent
       :else
-      (let [[parent child-key] parent-result
+      (let [parent-path (pop canvas-path)
+            child-key (peek canvas-path)
             sibling-key (if (= child-key :left) :right :left)
-            sibling (get parent sibling-key)]
-        
-        ;; Replace the split with its sibling
-        (let [grandparent-result (find-parent-of-node tree (:id parent))]
-          (if (nil? grandparent-result)
-            ;; Parent is root - sibling becomes new root
-            sibling
-            ;; Parent is not root - replace parent with sibling in grandparent
-            (let [[grandparent parent-key] grandparent-result]
-              (assoc-in tree [parent-key] sibling))))))))
+            sibling (node-at-path tree (conj parent-path sibling-key))]
+        ;; Replace the parent split with the removed canvas's sibling.
+        (replace-at-path tree parent-path sibling)))))
 
 (defn update-canvas-settings
   "Update the settings of a specific canvas.
@@ -177,20 +185,15 @@
    
    Returns: New tree with updated settings"
   [tree canvas-id settings]
-  (let [canvas (find-node tree canvas-id)]
-    (if (nil? canvas)
+  (let [canvas-path (find-canvas-path tree canvas-id)]
+    (if (nil? canvas-path)
       tree
-      (let [current-settings (or (:settings canvas) {})
+      (let [canvas (node-at-path tree canvas-path)
+            current-settings (or (:settings canvas) {})
             new-settings (if (fn? settings)
                            (settings current-settings)
-                           (merge current-settings settings))
-            parent-result (find-parent-of-node tree canvas-id)]
-        (if (nil? parent-result)
-          ;; Canvas is root
-          (assoc tree :settings new-settings)
-          ;; Canvas is not root
-          (let [[parent child-key] parent-result]
-            (assoc-in tree [child-key :settings] new-settings)))))))
+                           (merge current-settings settings))]
+        (assoc-in tree (conj canvas-path :settings) new-settings)))))
 
 (defn change-canvas-visualizer
   "Change the visualizer type of a specific canvas.
@@ -202,16 +205,10 @@
    
    Returns: New tree with updated visualizer"
   [tree canvas-id visualizer-type]
-  (let [canvas (find-node tree canvas-id)]
-    (if (nil? canvas)
+  (let [canvas-path (find-canvas-path tree canvas-id)]
+    (if (nil? canvas-path)
       tree
-      (let [parent-result (find-parent-of-node tree canvas-id)]
-        (if (nil? parent-result)
-          ;; Canvas is root
-          (assoc tree :visualizer-type visualizer-type)
-          ;; Canvas is not root
-          (let [[parent child-key] parent-result]
-            (assoc-in tree [child-key :visualizer-type] visualizer-type)))))))
+      (assoc-in tree (conj canvas-path :visualizer-type) visualizer-type))))
 
 ;; ============================================================================
 ;; Tree Serialization (for debugging/logging)

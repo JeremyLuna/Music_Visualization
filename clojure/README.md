@@ -182,12 +182,21 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Known Gaps / Next Steps
 
+- Make play/pause toggle
+- make canvas dividers thinner
+- Use themes (which can be overridden)
+- have square and rounded theme
+- scrubber should show minutes:seconds
+- clicking outside of settings panel should close it
+- Add swapping behavior for dividers
+- canvas bar, settings button, and pointer should dissappear after inactivity (if settings panel is closed)
 - The STFT visualizer path currently expects an FFT constructor at `js/FFT`; confirm or replace the FFT interop with a module import that matches the npm `fftjs` package.
 - The split divider is visual only; drag-to-resize behavior is not implemented yet.
 - Keyboard spacebar handling is stubbed and logs a TODO.
 - The visual style is still utilitarian and inline-style heavy.
 - There are no automated tests yet for layout operations, state transitions, or visualizer settings.
 - Production deployment is not wired in this directory.
+- add "load demo" button with copyright free song?
 
 ## Adding a Visualizer
 
