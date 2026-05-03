@@ -69,7 +69,7 @@
           (= key "Escape")
           (let [show? (get-in @state/app-state [:ui :show-control-panel])]
             (when show?
-              (state/dispatch :toggle-control-panel))))))))
+              (state/dispatch :hide-control-panel))))))))
 
 (defn setup-ui-hooks
   "Set up UI event handlers and lifecycle hooks."

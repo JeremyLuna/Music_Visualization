@@ -186,7 +186,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 - Use themes (which can be overridden)
 - have square and rounded theme
 - scrubber should show minutes:seconds
-- clicking outside of settings panel should close it
 - Add swapping behavior for dividers
 - canvas bar, settings button, and pointer should dissappear after inactivity (if settings panel is closed)
 - The STFT visualizer path currently expects an FFT constructor at `js/FFT`; confirm or replace the FFT interop with a module import that matches the npm `fftjs` package.

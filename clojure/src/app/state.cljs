@@ -88,6 +88,9 @@
     :toggle-control-panel
     (swap! app-state update-in [:ui :show-control-panel] not)
 
+    :hide-control-panel
+    (swap! app-state assoc-in [:ui :show-control-panel] false)
+
     :register-canvas-element
     (let [[canvas-id canvas-el] args]
       (swap! app-state assoc-in [:canvas-elements canvas-id] canvas-el))

@@ -171,59 +171,80 @@
 (defn control-panel
   "Main control panel component with audio and visualizer controls."
   []
-  (let [show? (r/cursor state/app-state [:ui :show-control-panel])
-        layout-root (r/cursor state/app-state [:layout :root])]
-    [:div.control-panel
-     {:style {:position "fixed"
-              :left (if @show? "0" "-300px")
-              :top 0
-              :width "280px"
-              :height "100%"
-              :background "white"
-              :border-right "1px solid #ccc"
-              :box-shadow "2px 0 8px rgba(0,0,0,0.1)"
-              :overflow-y "auto"
-              :transition "left 0.3s ease"
-              :z-index 100}}
-     
-     ;; Header with toggle button
-     [:div {:style {:display "flex"
-                    :justify-content "space-between"
-                    :align-items "center"
-                    :padding "10px"
-                    :border-bottom "1px solid #ddd"
-                    :background "#f5f5f5"}}
-      [:h2 {:style {:margin 0 :font-size "14px"}} "Settings"]
-      [:button
-       {:on-click #(state/dispatch :toggle-control-panel)
-        :style {:padding "5px 10px" :cursor "pointer" :background "none" :border "none"}}
-       "✕"]]
-     
-     ;; Panel content
-     [:div {:style {:padding "0"}}
-      [audio-player-controls]
-      [volume-control]
-      
-      ;; Show visualizer settings for each canvas
-      (for [canvas-id (canvas-ids-from-layout @layout-root)]
-        ^{:key canvas-id}
-        [visualizer-settings canvas-id])]
-     
-     ;; Toggle button outside (for hidden state)
-     (when-not @show?
-       [:button
-        {:on-click #(state/dispatch :toggle-control-panel)
-         :style {:position "fixed"
-                 :left "10px"
-                 :bottom "20px"
-                 :width "50px"
-                 :height "50px"
-                 :border-radius "50%"
-                 :background "#4CAF50"
-                 :color "white"
-                 :border "none"
-                 :font-size "24px"
-                 :cursor "pointer"
-                 :box-shadow "0 2px 8px rgba(0,0,0,0.2)"
-                 :z-index 99}}
-        "⚙"])]))
+  (let [panel-el (atom nil)
+        handle-document-click
+        (fn [event]
+          (let [show? (get-in @state/app-state [:ui :show-control-panel])
+                panel @panel-el
+                target (.-target event)]
+            (when (and show?
+                       panel
+                       (not (.contains panel target)))
+              (state/dispatch :hide-control-panel))))]
+    (r/create-class
+     {:display-name "control-panel"
+      :component-did-mount
+      (fn []
+        (js/document.addEventListener "click" handle-document-click))
+      :component-will-unmount
+      (fn []
+        (js/document.removeEventListener "click" handle-document-click))
+      :reagent-render
+      (fn []
+        (let [show? (r/cursor state/app-state [:ui :show-control-panel])
+              layout-root (r/cursor state/app-state [:layout :root])]
+          [:div.control-panel
+           {:ref #(reset! panel-el %)
+            :style {:position "fixed"
+                    :left (if @show? "0" "-300px")
+                    :top 0
+                    :width "280px"
+                    :height "100%"
+                    :background "white"
+                    :border-right "1px solid #ccc"
+                    :box-shadow "2px 0 8px rgba(0,0,0,0.1)"
+                    :overflow-y "auto"
+                    :transition "left 0.3s ease"
+                    :z-index 100}}
+           
+           ;; Header with toggle button
+           [:div {:style {:display "flex"
+                          :justify-content "space-between"
+                          :align-items "center"
+                          :padding "10px"
+                          :border-bottom "1px solid #ddd"
+                          :background "#f5f5f5"}}
+            [:h2 {:style {:margin 0 :font-size "14px"}} "Settings"]
+            [:button
+             {:on-click #(state/dispatch :hide-control-panel)
+              :style {:padding "5px 10px" :cursor "pointer" :background "none" :border "none"}}
+             "✕"]]
+           
+           ;; Panel content
+           [:div {:style {:padding "0"}}
+            [audio-player-controls]
+            [volume-control]
+            
+            ;; Show visualizer settings for each canvas
+            (for [canvas-id (canvas-ids-from-layout @layout-root)]
+              ^{:key canvas-id}
+              [visualizer-settings canvas-id])]
+           
+           ;; Toggle button outside (for hidden state)
+           (when-not @show?
+             [:button
+              {:on-click #(state/dispatch :toggle-control-panel)
+               :style {:position "fixed"
+                       :left "10px"
+                       :bottom "20px"
+                       :width "50px"
+                       :height "50px"
+                       :border-radius "50%"
+                       :background "#4CAF50"
+                       :color "white"
+                       :border "none"
+                       :font-size "24px"
+                       :cursor "pointer"
+                       :box-shadow "0 2px 8px rgba(0,0,0,0.2)"
+                       :z-index 99}}
+              "⚙"])]))})))
