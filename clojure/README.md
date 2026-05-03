@@ -166,20 +166,6 @@ Visualizers implement `visualizers.protocol/IVisualizer`:
 
 The render loop in `visualizers.engine` walks the active layout, creates or reuses visualizer instances, syncs settings, and renders each mounted canvas on every animation frame.
 
-## Implementation Status
-
-- [x] Shadow-cljs/Reagent project setup
-- [x] App initialization and root component wiring
-- [x] Central state atom and dispatch actions
-- [x] Web Audio API interop
-- [x] Audio playback, file loading, seek, current time, and volume
-- [x] AudioWorklet sample capture and sample puller buffers
-- [x] Dynamic canvas layout model
-- [x] Reagent canvas layout view
-- [x] Control panel with playback and per-canvas visualizer settings
-- [x] Visualizer protocol, registry, waveform visualizer, and STFT visualizer
-- [x] Runtime render engine
-
 ## Known Gaps / Next Steps
 
 - Use themes (which can be overridden)
