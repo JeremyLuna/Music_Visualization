@@ -136,10 +136,12 @@
   [theme]
   (let [theme (merge default-theme (or theme {}))
         palette-id (:palette theme)
-        base-colors (if (= palette-id :custom)
+        custom? (= palette-id :custom)
+        base-colors (if custom?
                       (palette-colors :studio)
                       (palette-colors palette-id))]
-    (select-keys (merge base-colors (:custom-colors theme))
+    (select-keys (cond-> base-colors
+                   custom? (merge (:custom-colors theme)))
                  palette-color-keys)))
 
 (defn- expanded-colors
