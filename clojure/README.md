@@ -166,7 +166,7 @@ Visualizers implement `visualizers.protocol/IVisualizer`:
 
 The render loop in `visualizers.engine` walks the active layout, creates or reuses visualizer instances, syncs settings, and renders each mounted canvas on every animation frame.
 
-## Known Gaps / Next Steps
+## Todo List
 
 - Use themes (which can be overridden)
 - have square and rounded theme
