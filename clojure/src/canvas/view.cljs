@@ -74,7 +74,7 @@
 
 (defn canvas-node-view
   "Render a single canvas node with controls."
-  [canvas-id canvas-node on-split on-remove can-remove?]
+  [canvas-id canvas-node on-split on-remove can-remove? ui-visible?]
   [:div.canvas-node
    {:style {:display "flex"
             :flex-direction "column"
@@ -91,7 +91,10 @@
              :align-items "center"
              :gap "5px"
              :font-size "12px"
-             :position "relative"}}
+             :position "relative"
+             :opacity (if ui-visible? 1 0)
+             :pointer-events (if ui-visible? "auto" "none")
+             :transition "opacity 0.2s ease"}}
     
     [:span
      {:style {:position "absolute"
@@ -161,7 +164,7 @@
 
 (defn split-node-view
   "Render a split node with two sub-trees and a splitter."
-  [split-node on-split on-remove can-remove?]
+  [split-node on-split on-remove can-remove? ui-visible?]
   (r/with-let [container-ref (r/atom nil)
                dragging? (r/atom false)]
     (let [orientation (:orientation split-node)
@@ -194,7 +197,7 @@
                  :min-width "100px"
                  :min-height "100px"}}
         ^{:key (str "split-left-" (:id (:left split-node)))}
-        [layout-tree-view (:left split-node) on-split on-remove can-remove?]]
+        [layout-tree-view (:left split-node) on-split on-remove can-remove? ui-visible?]]
 
        ;; Splitter divider. The visible rule is 2px; the child hit area is wider.
        [:div
@@ -236,24 +239,24 @@
                  :min-width "100px"
                  :min-height "100px"}}
         ^{:key (str "split-right-" (:id (:right split-node)))}
-        [layout-tree-view (:right split-node) on-split on-remove can-remove?]]])
+        [layout-tree-view (:right split-node) on-split on-remove can-remove? ui-visible?]]])
     (finally
       (clear-body-drag-style!))))
 
 (defn layout-tree-view
   "Recursively render the layout tree."
-  [node on-split on-remove can-remove?]
+  [node on-split on-remove can-remove? ui-visible?]
   (cond
     (nil? node) 
     [:div {:style {:flex 1 :background "#f0f0f0"}} "Empty layout"]
     
     (= (:type node) :canvas)
     ^{:key (str "canvas-" (:id node))}
-    [canvas-node-view (:id node) node on-split on-remove can-remove?]
+    [canvas-node-view (:id node) node on-split on-remove can-remove? ui-visible?]
     
     (= (:type node) :split)
     ^{:key (str "split-" (:id node))}
-    [split-node-view node on-split on-remove can-remove?]
+    [split-node-view node on-split on-remove can-remove? ui-visible?]
     
     :else
     [:div {:style {:flex 1 :background "#f0f0f0"}} "Unknown node type"]))
@@ -287,12 +290,16 @@
                          (state/dispatch :split-canvas canvas-id orientation))
               on-remove (fn [canvas-id]
                           (state/dispatch :remove-canvas canvas-id))
-              can-remove? (> (model/count-canvases @layout-atom) 1)]
+              can-remove? (> (model/count-canvases @layout-atom) 1)
+              show-control-panel? (get-in @state/app-state [:ui :show-control-panel])
+              interaction-active? (get-in @state/app-state [:ui :interaction-active])
+              ui-visible? (or show-control-panel? interaction-active?)]
           
           [:div.canvas-manager
            {:style {:display "flex"
                     :flex 1
                     :overflow "hidden"
                     :height "100%"
-                    :width "100%"}}
-           [layout-tree-view @layout-atom on-split on-remove can-remove?]]))})))
+                    :width "100%"
+                    :cursor (if ui-visible? "auto" "none")}}
+           [layout-tree-view @layout-atom on-split on-remove can-remove? ui-visible?]]))})))

@@ -168,10 +168,10 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
+- canvas bar should be in front of canvas, not on top.
 - Use themes (which can be overridden)
 - have square and rounded theme
 - Add swapping behavior for dividers
-- canvas bar, settings button, and pointer should dissappear after inactivity (if settings panel is closed)
 - Production deployment is not wired in this directory.
 - add "load demo" button with copyright free song?
 

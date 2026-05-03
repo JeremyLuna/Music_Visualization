@@ -203,6 +203,8 @@
       :reagent-render
       (fn []
         (let [show? (r/cursor state/app-state [:ui :show-control-panel])
+              interaction-active? (r/cursor state/app-state [:ui :interaction-active])
+              toggle-visible? (or @show? @interaction-active?)
               layout-root (r/cursor state/app-state [:layout :root])]
           [:div.control-panel
            {:ref #(reset! panel-el %)
@@ -257,5 +259,8 @@
                        :font-size "24px"
                        :cursor "pointer"
                        :box-shadow "0 2px 8px rgba(0,0,0,0.2)"
-                       :z-index 99}}
+                       :z-index 99
+                       :opacity (if toggle-visible? 1 0)
+                       :pointer-events (if toggle-visible? "auto" "none")
+                       :transition "opacity 0.2s ease"}}
               "⚙"])]))})))

@@ -15,6 +15,7 @@
                     :right nil}
              :canvas-counter 1}
     :ui {:show-control-panel false
+         :interaction-active true
          :settings {}}
     :visualizers {:instances {}  ;; {canvas-id -> visualizer instance}}
     :samples {:channels {}}})"
@@ -39,6 +40,7 @@
                     :right nil}
              :canvas-counter 1}
     :ui {:show-control-panel false
+         :interaction-active true
          :settings {}}
     :visualizers {:instances {}}
     :canvas-elements {}
@@ -90,6 +92,10 @@
 
     :hide-control-panel
     (swap! app-state assoc-in [:ui :show-control-panel] false)
+
+    :set-interaction-active
+    (let [[active?] args]
+      (swap! app-state assoc-in [:ui :interaction-active] active?))
 
     :register-canvas-element
     (let [[canvas-id canvas-el] args]
