@@ -10,6 +10,14 @@
 ;; FFT and Spectrum Computation
 ;; ============================================================================
 
+(def default-settings
+  {:fft-size 512
+   :color-map :hot})
+
+(defn- effective-settings
+  [settings]
+  (merge default-settings settings))
+
 (defn compute-magnitude-spectrum
   "Compute magnitude spectrum from audio samples using FFT.
    
@@ -62,7 +70,7 @@
     (let [ctx (interop/get-canvas-context canvas-element)
           canvas-width (interop/get-canvas-width canvas-element)
           canvas-height (interop/get-canvas-height canvas-element)
-          fft-size (:fft-size settings)
+          {:keys [fft-size]} (effective-settings settings)
           num-bins (/ fft-size 2)]
       
       ;; Get latest audio samples
@@ -103,7 +111,7 @@
               (interop/draw-pixels canvas-element pixel-data canvas-width canvas-height)))))))
   
   (update-settings [this new-settings]
-    (->STFTVisualizer new-settings spectrogram-buffer))
+    (assoc this :settings (merge settings new-settings)))
   
   (get-settings [this]
     settings))
@@ -116,8 +124,9 @@
    - color-map: Color scheme keyword (default :hot)
    
    Returns: STFTVisualizer instance"
-  [& {:keys [fft-size color-map] :or {fft-size 512 color-map :hot}}]
+  [& {:keys [fft-size color-map]}]
   (->STFTVisualizer
-   {:fft-size fft-size
-    :color-map color-map}
+   (cond-> {}
+     (some? fft-size) (assoc :fft-size fft-size)
+     (some? color-map) (assoc :color-map color-map))
    nil))  ;; Spectrogram buffer initialized on first render if needed

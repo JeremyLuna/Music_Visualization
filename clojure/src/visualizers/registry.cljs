@@ -15,9 +15,9 @@
    
    Maps visualizer type keywords to factory functions."
   {:stft     {:name "STFT Spectrogram"
-              :factory #(stft/create-stft-visualizer %)}
+              :factory stft/create-stft-visualizer}
    :waveform {:name "Waveform"
-              :factory #(waveform/create-waveform-visualizer %)}})
+              :factory waveform/create-waveform-visualizer}})
 
 ;; ============================================================================
 ;; Factory Functions
