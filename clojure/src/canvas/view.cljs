@@ -42,8 +42,7 @@
         [:canvas
          {:style {:width "100%"
                   :height "100%"
-                  :background "white"
-                  :border "1px solid #ccc"}
+                  :background "white"}
           :ref (fn [el] (reset! el-ref el))}])})))
 
 ;; ============================================================================
@@ -130,8 +129,8 @@
      [:div
       {:style {:background "#ddd"
                :cursor (if is-horizontal? "col-resize" "row-resize")
-               :width (if is-horizontal? "8px" "100%")
-               :height (if is-horizontal? "100%" "8px")
+               :width (if is-horizontal? "2px" "100%")
+               :height (if is-horizontal? "100%" "2px")
                :flex-shrink 0
                :user-select "none"}}]
      
