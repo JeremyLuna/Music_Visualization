@@ -70,21 +70,25 @@
     
     [:span (str "Canvas " canvas-id)]
     
-    [:button
-     {:on-click #(on-split canvas-id :h)
-      :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
-     "Split H"]
-    
-    [:button
-     {:on-click #(on-split canvas-id :v)
-      :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
-     "Split V"]
-    
-    [:button
-     {:on-click #(on-remove canvas-id)
-      :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"
-              :margin-left "auto" :background "#ff6b6b" :color "white"}}
-     "Remove"]]
+    [:div
+     {:style {:margin-left "auto"
+              :display "flex"
+              :gap "5px"}}
+     [:button
+      {:on-click #(on-split canvas-id :h)
+       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
+      "↔"]
+     
+     [:button
+      {:on-click #(on-split canvas-id :v)
+       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"}}
+      "↕"]
+     
+     [:button
+      {:on-click #(on-remove canvas-id)
+       :style {:padding "3px 8px" :font-size "11px" :cursor "pointer"
+               :background "#ff6b6b" :color "white"}}
+      "x"]]]
    
    ;; Canvas element
    [:div
