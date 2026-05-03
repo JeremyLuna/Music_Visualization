@@ -1,183 +1,202 @@
 # Music Visualization - ClojureScript Implementation
 
-A ClojureScript port of the Music Visualization app using **Shadow-cljs** and **Reagent** for a reactive, immutable-state-driven approach to audio visualization.
+A ClojureScript port of the Music Visualization app using **Shadow-cljs** and **Reagent**. The implementation mirrors the vanilla JS version's core ideas while leaning into ClojureScript's strengths: immutable layout data, centralized state transitions, and protocol-based visualizers.
+
+## Current Features
+
+- Reagent single-page app mounted from `app.init`
+- Central `app.state/app-state` atom with dispatch-based updates
+- Browser audio playback through the Web Audio API
+- Audio file loading, play, pause, stop, seek, duration, current time, and volume controls
+- AudioWorklet-backed sample capture through `public/sample_processor.js`
+- Dynamic canvas layout tree with horizontal and vertical splits
+- Canvas registration and resize-aware canvas backing dimensions
+- Per-canvas visualizer selection and settings
+- Runtime visualizer engine driven by `requestAnimationFrame`
+- `IVisualizer` protocol with waveform and STFT visualizer implementations
+- Visualizer registry for adding additional visualizer types
 
 ## Project Structure
 
-```
+```text
 clojure/
-├── deps.edn                 # Clojure/ClojureScript dependencies
-├── shadow-cljs.edn         # Shadow-cljs build configuration
-├── public/                 # Static assets (compiled JS, HTML, etc)
-│   ├── index.html         # Entry point
-│   └── js/                # Shadow-cljs output (generated)
+├── deps.edn                    # Clojure/ClojureScript dependencies and aliases
+├── package.json                # npm scripts and JS dependencies
+├── shadow-cljs.edn             # Shadow-cljs browser build configuration
+├── public/
+│   ├── index.html              # Browser entry point
+│   ├── sample_processor.js     # AudioWorklet processor for sample capture
+│   └── js/                     # Shadow-cljs output (generated)
 └── src/
-    ├── app/               # Root component and state management
-    │   ├── core.cljs     # Root Reagent component
-    │   └── state.cljs    # Central app-state atom + dispatch
-    ├── audio/             # Audio pipeline (recording, playback)
-    │   ├── interop.cljs  # Web Audio API + Canvas interop
-    │   ├── player.cljs   # Audio playback (TODO)
-    │   └── sample_puller.cljs  # Sample capture (TODO)
-    ├── canvas/            # Dynamic canvas layout management
-    │   ├── model.cljs    # Layout tree operations (TODO)
-    │   ├── view.cljs     # Reagent canvas components (TODO)
-    │   └── controller.cljs # State transitions (TODO)
-    ├── visualizers/       # Audio visualization implementations
-    │   ├── protocol.cljs # IVisualizer protocol (TODO)
-    │   ├── stft.cljs     # STFT spectrogram (TODO)
-    │   ├── waveform.cljs # Time-domain waveform (TODO)
-    │   └── registry.cljs # Visualizer factory (TODO)
-    └── ui/                # UI components
-        ├── control_panel.cljs # Settings panel (TODO)
-        └── settings.cljs      # Settings schema (TODO)
+    ├── app/
+    │   ├── core.cljs           # Root Reagent component
+    │   ├── init.cljs           # App startup, audio init, and render loop startup
+    │   └── state.cljs          # Central app-state atom and dispatch actions
+    ├── audio/
+    │   ├── interop.cljs        # Web Audio, Canvas 2D, FileReader, and FFT wrappers
+    │   ├── player.cljs         # AudioPlayer record and playback/file APIs
+    │   └── sample_puller.cljs  # AudioWorklet sample buffering
+    ├── canvas/
+    │   ├── model.cljs          # Pure layout tree operations
+    │   ├── view.cljs           # Reagent canvas/split layout components
+    │   └── controller.cljs     # Convenience dispatch wrappers
+    ├── ui/
+    │   └── control_panel.cljs  # File, playback, volume, and visualizer settings UI
+    └── visualizers/
+        ├── protocol.cljs       # IVisualizer protocol
+        ├── engine.cljs         # Render loop and visualizer instance lifecycle
+        ├── registry.cljs       # Visualizer factory and metadata registry
+        ├── stft.cljs           # FFT/STFT-style frequency visualizer
+        └── waveform.cljs       # Time-domain waveform visualizer
 ```
 
 ## Setup
 
 ### Prerequisites
 
-- Node.js 14+ (for shadow-cljs and npm packages)
-- Java 11+ (for Clojure/ClojureScript compilation)
+- Node.js 14+
+- Java 11+
 
-### Installation
+### Install
 
-1. Install dependencies:
-   ```bash
-   npm install
-   cd clojure
-   clj -X shadow.cljs.cli/watch :builds '[{:id "app"}]'
-   ```
+```bash
+cd clojure
+npm install
+```
 
-   OR using the `deps.edn` directly:
-   ```bash
-   cd clojure
-   clj -Ashadow watch app
-   ```
+## Running the App
 
-2. In another terminal, start the dev server:
-   ```bash
-   cd clojure/public
-   python3 -m http.server 8000
-   ```
+Run the Shadow-cljs watcher:
 
-   (Or use `live-server`, `http-server`, etc.)
+```bash
+cd clojure
+npm run dev
+```
 
-3. Open http://localhost:8000 in your browser
+In another terminal, serve `public/`:
+
+```bash
+cd clojure
+npm run serve:dev
+```
+
+Open http://localhost:8000.
+
+Shadow-cljs also starts its own development server at http://127.0.0.1:3000, but the current npm serve script uses the static Python server on port 8000.
+
+## Script Reference
+
+- `npm run dev`: Watch and recompile the browser build.
+- `npm run release`: Build optimized production output into `public/js`.
+- `npm run serve:dev`: Serve `public/` on port 8000.
+- `npm run serve:release`: Build release output, then serve it.
+- `npm run serve`: Alias for `serve:dev`.
 
 ## Development Workflow
 
-### Watch Mode
+### Browser REPL
 
-Shadow-cljs automatically recompiles on file changes:
-
-```bash
-cd clojure
-clj -Ashadow watch app
-```
-
-The browser will hot-reload (via Shadow-cljs REPL).
-
-### REPL
-
-To connect to the Shadow-cljs REPL:
+Start the watcher first:
 
 ```bash
 cd clojure
-clj -Ashadow cljs-repl app
+npm run dev
 ```
 
-Then in the REPL:
+Then connect to the app REPL:
+
+```bash
+npx shadow-cljs cljs-repl app
+```
+
+Useful REPL snippets:
+
 ```clojure
 (require '[app.state :as state])
-@state/app-state  ;; View current state
+@state/app-state
+(state/dispatch :toggle-control-panel)
 ```
 
-### Build for Production
+### Production Build
 
 ```bash
 cd clojure
-clj -Ashadow release app
+npm run release
 ```
 
-Output: `public/js/main.js` (optimized & minified)
+The compiled output is written to `public/js`.
 
-## Implementation Status
+## Architecture
 
-### Phase 1: Project Setup ✅
-- [x] Shadow-cljs & deps.edn configuration
-- [x] Project directory structure
-- [x] JS interop layer (Web Audio API, Canvas 2D)
-- [x] Central app-state atom definition
-- [x] Root component scaffold
+### State
 
-### Phase 2: Audio Pipeline ⏳
-- [ ] AudioSamplePuller implementation
-- [ ] AudioWorklet processor
-- [ ] MusicPlayer wrapper functions
+The app keeps browser-facing mutable state in one Reagent atom:
 
-### Phase 3: Canvas & Layout ⏳
-- [ ] DynamicCanvasModel (layout tree operations)
-- [ ] DynamicCanvasView (Reagent components)
-- [ ] DynamicCanvasController (state transitions)
+- `:audio`: audio context, player, sample puller, playback state, duration, current time, and volume
+- `:layout`: the immutable canvas layout tree and next canvas ID
+- `:ui`: control panel state
+- `:visualizers`: active visualizer instances and settings
+- `:canvas-elements`: mounted canvas DOM nodes keyed by canvas ID
+- `:samples`: sample storage hooks for future expansion
 
-### Phase 4: Visualizers ⏳
-- [ ] IVisualizer protocol
-- [ ] STFT Visualizer (uses JS FFT library)
-- [ ] Waveform Visualizer
-- [ ] Visualizer registry
+State changes flow through `app.state/dispatch`, while pure layout behavior lives in `canvas.model`.
 
-### Phase 5: Control Panel & UI ⏳
-- [ ] ControlPanel component
-- [ ] Settings schema and form components
+### Audio
 
-### Phase 6: App Integration ⏳
-- [ ] Wire all components together
-- [ ] Initialization and warmup logic
+`audio.player/create-audio-player` builds the browser audio graph:
 
-### Phase 7: Build & Deployment ⏳
-- [ ] Production build optimization
-- [ ] GitHub Pages deployment setup
+```text
+HTMLAudioElement -> MediaElementAudioSourceNode -> GainNode -> speakers
+                                                   └---------> AudioWorklet sample capture
+```
 
-## Key Technologies
+Loaded audio files are played through the hidden audio element. The worklet posts sample frames to `audio.sample-puller`, which keeps per-channel circular buffers for visualizers.
 
-- **Shadow-cljs**: ClojureScript build tool and REPL
-- **Reagent**: React wrapper for ClojureScript (reactive components)
-- **Web Audio API**: Audio playback and sample capture (via JS interop)
-- **Canvas 2D**: Real-time visualization drawing
-- **FFT Library**: High-performance FFT (via JS interop, e.g., fftjs)
+### Canvas Layout
 
-## Architecture Highlights
-
-### State Management
-
-Single centralized atom (`app.state/app-state`) contains all mutable state:
-- Audio context and playback state
-- Canvas layout tree (immutable nested structure)
-- UI settings
-- Visualizer instances
-- Sample buffers
-
-Pure functions in `app.state/dispatch` handle state updates.
-
-### Components
-
-Reagent components subscribe to portions of `app-state` and re-render reactively on changes.
+Canvas layout is represented as a recursive tree of `:canvas` leaves and `:split` containers. Splitting a canvas replaces the selected leaf with a split node containing the original canvas and a new waveform canvas. Removing a canvas promotes its sibling so the layout remains valid.
 
 ### Visualizers
 
-Protocols define the `IVisualizer` interface, enabling polymorphic visualization strategies (STFT, Waveform, future visualizers).
+Visualizers implement `visualizers.protocol/IVisualizer`:
 
-### Interop
+- `render`: draw the current frame to a canvas
+- `update-settings`: apply per-canvas settings
+- `get-settings`: expose current settings
 
-Web Audio API and Canvas 2D are accessed through carefully designed wrapper functions in `audio.interop`, providing a Clojure-friendly API while hiding JS interop details.
+The render loop in `visualizers.engine` walks the active layout, creates or reuses visualizer instances, syncs settings, and renders each mounted canvas on every animation frame.
 
-## Next Steps
+## Implementation Status
 
-1. Implement Audio Pipeline (Phase 2)
-2. Implement Canvas & Layout Management (Phase 3)
-3. Implement Visualizers (Phase 4)
-4. Build UI components (Phase 5)
-5. Integrate and test
+- [x] Shadow-cljs/Reagent project setup
+- [x] App initialization and root component wiring
+- [x] Central state atom and dispatch actions
+- [x] Web Audio API interop
+- [x] Audio playback, file loading, seek, current time, and volume
+- [x] AudioWorklet sample capture and sample puller buffers
+- [x] Dynamic canvas layout model
+- [x] Reagent canvas layout view
+- [x] Control panel with playback and per-canvas visualizer settings
+- [x] Visualizer protocol, registry, waveform visualizer, and STFT visualizer
+- [x] Runtime render engine
 
-See `/memories/session/plan.md` for the full development plan.
+## Known Gaps / Next Steps
+
+- The STFT visualizer path currently expects an FFT constructor at `js/FFT`; confirm or replace the FFT interop with a module import that matches the npm `fftjs` package.
+- The split divider is visual only; drag-to-resize behavior is not implemented yet.
+- Keyboard spacebar handling is stubbed and logs a TODO.
+- The visual style is still utilitarian and inline-style heavy.
+- There are no automated tests yet for layout operations, state transitions, or visualizer settings.
+- Production deployment is not wired in this directory.
+
+## Adding a Visualizer
+
+1. Add a new namespace under `src/visualizers/`.
+2. Implement `visualizers.protocol/IVisualizer`.
+3. Add the visualizer metadata and factory to `visualizers.registry/visualizer-registry`.
+4. Add settings controls in `ui.control-panel/visualizer-settings` if the visualizer has configurable options.
+
+## Related Docs
+
+- `QUICKSTART.md`: shorter runbook and troubleshooting notes
+- Root `README.md`: overall repo notes and research links
