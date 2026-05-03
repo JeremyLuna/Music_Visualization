@@ -91,7 +91,11 @@
              :align-items "center"
              :gap "5px"
              :font-size "12px"
-             :position "relative"
+             :position "absolute"
+             :top 0
+             :left 0
+             :right 0
+             :z-index 10
              :opacity (if ui-visible? 1 0)
              :pointer-events (if ui-visible? "auto" "none")
              :transition "opacity 0.2s ease"}}
@@ -125,7 +129,9 @@
    
    ;; Canvas element
    [:div
-    {:style {:flex 1 :overflow "hidden"}}
+    {:style {:position "absolute"
+             :inset 0
+             :overflow "hidden"}}
     [canvas-element canvas-id]]])
 
 (declare layout-tree-view)

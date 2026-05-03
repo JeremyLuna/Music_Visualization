@@ -168,7 +168,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
-- canvas bar should be in front of canvas, not on top.
 - Use themes (which can be overridden)
 - have square and rounded theme
 - Add swapping behavior for dividers
