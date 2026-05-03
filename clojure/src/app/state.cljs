@@ -93,11 +93,18 @@
 
     :register-canvas-element
     (let [[canvas-id canvas-el] args]
-      (swap! app-state assoc-in [:canvas-elements canvas-id] canvas-el))
+      (when canvas-el
+        (swap! app-state assoc-in [:canvas-elements canvas-id] canvas-el)))
 
     :unregister-canvas-element
-    (let [[canvas-id] args]
-      (swap! app-state update :canvas-elements dissoc canvas-id))
+    (let [[canvas-id canvas-el] args]
+      (swap! app-state
+             (fn [s]
+               (let [registered-el (get-in s [:canvas-elements canvas-id])]
+                 (if (or (nil? canvas-el)
+                         (identical? registered-el canvas-el))
+                   (update s :canvas-elements dissoc canvas-id)
+                   s)))))
     
     :split-canvas
     (let [[canvas-id orientation] args]
@@ -123,6 +130,10 @@
                    (let [remaining-ids (set (canvas-ids new-layout))]
                      (-> s
                          (assoc-in [:layout :root] new-layout)
+                         (update :canvas-elements
+                                 (fn [m]
+                                   (into {}
+                                         (filter (fn [[id _]] (contains? remaining-ids id)) m))))
                          (update-in [:visualizers :instances]
                                     (fn [m]
                                       (into {}

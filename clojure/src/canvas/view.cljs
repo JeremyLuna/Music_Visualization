@@ -14,12 +14,22 @@
 (defn canvas-element
   "Create a canvas DOM element with sizing."
   [canvas-id]
-  (let [el-ref (r/atom nil)]
+  (let [el-ref (r/atom nil)
+        registered-el (atom nil)
+        resize-observer (atom nil)
+        register! (fn [id]
+                    (when-let [el @el-ref]
+                      (reset! registered-el el)
+                      (state/dispatch :register-canvas-element id el)))
+        unregister! (fn [id]
+                      (when-let [el @registered-el]
+                        (state/dispatch :unregister-canvas-element id el)
+                        (reset! registered-el nil)))]
     (r/create-class
      {:component-did-mount
       (fn [this]
-        ;; Set up ResizeObserver to track canvas size changes
-        (state/dispatch :register-canvas-element canvas-id @el-ref)
+        (let [[_ mounted-canvas-id] (r/argv this)]
+          (register! mounted-canvas-id))
         (when (exists? js/ResizeObserver)
           (let [observer (js/ResizeObserver.
                          (fn [entries]
@@ -31,14 +41,27 @@
                                    canvas (.-target entry)]
                                (set! (.-width canvas) (int width))
                                (set! (.-height canvas) (int height))))))]
+            (reset! resize-observer observer)
             (.observe observer @el-ref))))
 
+      :component-did-update
+      (fn [this old-argv]
+        (let [[_ old-canvas-id] old-argv
+              [_ new-canvas-id] (r/argv this)]
+          (when (not= old-canvas-id new-canvas-id)
+            (unregister! old-canvas-id)
+            (register! new-canvas-id))))
+
       :component-will-unmount
-      (fn []
-        (state/dispatch :unregister-canvas-element canvas-id))
+      (fn [this]
+        (let [[_ unmounted-canvas-id] (r/argv this)]
+          (when-let [observer @resize-observer]
+            (.disconnect observer)
+            (reset! resize-observer nil))
+          (unregister! unmounted-canvas-id)))
       
       :reagent-render
-      (fn []
+      (fn [_canvas-id]
         [:canvas
          {:style {:width "100%"
                   :height "100%"
@@ -170,6 +193,7 @@
                  :overflow "hidden"
                  :min-width "100px"
                  :min-height "100px"}}
+        ^{:key (str "split-left-" (:id (:left split-node)))}
         [layout-tree-view (:left split-node) on-split on-remove can-remove?]]
 
        ;; Splitter divider. The visible rule is 2px; the child hit area is wider.
@@ -211,6 +235,7 @@
                  :overflow "hidden"
                  :min-width "100px"
                  :min-height "100px"}}
+        ^{:key (str "split-right-" (:id (:right split-node)))}
         [layout-tree-view (:right split-node) on-split on-remove can-remove?]]])
     (finally
       (clear-body-drag-style!))))
@@ -223,9 +248,11 @@
     [:div {:style {:flex 1 :background "#f0f0f0"}} "Empty layout"]
     
     (= (:type node) :canvas)
+    ^{:key (str "canvas-" (:id node))}
     [canvas-node-view (:id node) node on-split on-remove can-remove?]
     
     (= (:type node) :split)
+    ^{:key (str "split-" (:id node))}
     [split-node-view node on-split on-remove can-remove?]
     
     :else
