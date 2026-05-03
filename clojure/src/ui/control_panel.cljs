@@ -34,8 +34,40 @@
 (defn- section-style
   [theme]
   (let [colors (theme/colors theme)]
-    {:padding "10px"
-     :border-bottom (str "1px solid " (:border colors))}))
+    {:border-bottom (str "1px solid " (:border colors))}))
+
+(defn- section-body-style
+  []
+  {:padding "0 10px 10px"})
+
+(defn- collapsible-section
+  [title theme & children]
+  (r/with-let [open? (r/atom true)]
+    (let [colors (theme/colors theme)]
+      [:div {:style (section-style theme)}
+       [:button {:type "button"
+                 :aria-expanded @open?
+                 :on-click #(swap! open? not)
+                 :style {:display "flex"
+                         :align-items "center"
+                         :justify-content "space-between"
+                         :width "100%"
+                         :padding "10px"
+                         :border 0
+                         :background "transparent"
+                         :color (:text colors)
+                         :cursor "pointer"
+                         :font "inherit"
+                         :text-align "left"}}
+        [:span {:style {:font-size "14px"
+                        :font-weight 700}}
+         title]
+        [:span {:aria-hidden true
+                :style {:font-size "12px"
+                        :color (:muted-text colors)}}
+         (if @open? "▾" "▸")]]
+       (when @open?
+         (into [:div {:style (section-body-style)}] children))])))
 
 (defn- label-style
   [theme]
@@ -112,20 +144,16 @@
 ;; ============================================================================
 
 (defn audio-player-controls
-  "UI controls for audio playback (file upload, playback toggle, seek)."
+  "UI controls for audio playback (file upload, playback toggle, seek, volume)."
   []
   (let [audio-player (get-in @state/app-state [:audio :player])
         is-playing? (get-in @state/app-state [:audio :is-playing])
         current-time (get-in @state/app-state [:audio :current-time])
         duration (get-in @state/app-state [:audio :duration])
+        volume (get-in @state/app-state [:audio :volume])
         theme (current-theme)
         colors (theme/colors theme)]
-    [:div.audio-player {:style (section-style theme)}
-     [:h3 {:style {:margin "0 0 10px"
-                   :font-size "14px"
-                   :color (:text colors)}}
-      "Audio Player"]
-
+    [collapsible-section "Audio Player" theme
      [:div {:style {:margin-bottom "10px"}}
       [:input
        {:type "file"
@@ -168,7 +196,29 @@
         :disabled (or (nil? audio-player) (<= duration 0))
         :on-change #(when audio-player
                       (player/seek audio-player (js/parseFloat (-> % .-target .-value))))
-        :style {:flex 1 :cursor "pointer" :accent-color (:primary colors)}}]]]))
+        :style {:flex 1 :cursor "pointer" :accent-color (:primary colors)}}]]
+
+     [:div {:style {:margin-top "10px"}}
+      [:label {:style (label-style theme)}
+       "Volume"]
+      [:div {:style {:display "flex"
+                     :align-items "center"
+                     :gap "8px"}}
+       [:input
+        {:type "range"
+         :min 0
+         :max 100
+         :value (* 100 volume)
+         :style {:flex 1 :accent-color (:primary colors)}
+         :on-change #(let [v (/ (js/parseFloat (-> % .-target .-value)) 100)]
+                       (state/dispatch :set-volume v)
+                       (when audio-player
+                         (player/set-volume audio-player v)))}]
+       [:span {:style {:min-width "34px"
+                       :font-size "11px"
+                       :text-align "right"
+                       :color (:muted-text colors)}}
+        (str (int (* 100 volume)) "%")]]]]))
 
 ;; ============================================================================
 ;; Theme Settings Component
@@ -181,12 +231,7 @@
         effective-theme (theme/effective-theme theme-state)
         colors (:colors effective-theme)
         custom? (= (:palette effective-theme) :custom)]
-    [:div.theme-settings {:style (section-style effective-theme)}
-     [:h3 {:style {:margin "0 0 10px"
-                   :font-size "14px"
-                   :color (:text colors)}}
-      "Theme"]
-
+    [collapsible-section "Theme" effective-theme
      [:div {:style {:margin-bottom "10px"}}
       [:label {:style (label-style effective-theme)} "Palette"]
       [:select {:style (input-style effective-theme)
@@ -254,12 +299,7 @@
         colors (theme/colors theme-state)
         theme-viz-settings (theme/visualizer-settings theme-state)
         effective-settings (merge theme-viz-settings settings)]
-    [:div.visualizer-settings {:style (section-style theme-state)}
-     [:h4 {:style {:margin "0 0 10px"
-                   :font-size "13px"
-                   :color (:text colors)}}
-      (str "Canvas " canvas-id " Settings")]
-
+    [collapsible-section (str "Canvas " canvas-id " Settings") theme-state
      [:div {:style {:margin-bottom "10px"}}
       [:label {:style (label-style theme-state)}
        "Visualizer Type"]
@@ -331,33 +371,6 @@
         [:p {:style {:margin 0 :color (:muted-text colors)}} "No settings for this visualizer."])]]))
 
 ;; ============================================================================
-;; Volume Control Component
-;; ============================================================================
-
-(defn volume-control
-  "Volume slider control."
-  []
-  (let [audio-player (get-in @state/app-state [:audio :player])
-        volume (get-in @state/app-state [:audio :volume])
-        theme (current-theme)
-        colors (theme/colors theme)]
-    [:div {:style (section-style theme)}
-     [:label {:style (label-style theme)}
-      "Volume"]
-     [:input
-      {:type "range"
-       :min 0
-       :max 100
-       :value (* 100 volume)
-       :style {:width "100%" :accent-color (:primary colors)}
-       :on-change #(let [v (/ (js/parseFloat (-> % .-target .-value)) 100)]
-                     (state/dispatch :set-volume v)
-                     (when audio-player
-                       (player/set-volume audio-player v)))}]
-     [:span {:style {:font-size "11px" :color (:muted-text colors)}}
-      (str " " (int (* 100 volume)) "%")]]))
-
-;; ============================================================================
 ;; Main Control Panel Component
 ;; ============================================================================
 
@@ -422,7 +435,6 @@
 
            [:div {:style {:padding "0"}}
             [audio-player-controls]
-            [volume-control]
             [theme-settings]
 
             (for [canvas-id (canvas-ids-from-layout @layout-root)]
