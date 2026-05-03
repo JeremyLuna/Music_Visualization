@@ -150,7 +150,6 @@ Just push to GitHub and check "Actions" tab for build status.
 ### App doesn't load or shows "Loading app..."
 
 1. **Check browser console (F12)** for errors
-   - Look for "FFT library not loaded" → fftjs import failed
    - Look for "App container (#app) not found" → index.html issue
 
 2. **Check server is running:**

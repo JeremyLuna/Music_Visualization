@@ -123,6 +123,32 @@
                             (:max-buffer-size puller)
                             count))))
 
+(defn get-channel-samples-written
+  "Get the total number of samples captured for a channel."
+  [^SamplePuller puller channel-index]
+  (if (or (neg? channel-index) (>= channel-index (:num-channels puller)))
+    0
+    @(get (:samples-written puller) channel-index)))
+
+(defn pull-channel-samples-since
+  "Extract samples captured for a channel after a previous total count.
+
+   If more samples arrived than the circular buffer can hold, this returns the
+   newest max-buffer-size samples."
+  [^SamplePuller puller channel-index previous-samples-written]
+  (if (or (neg? channel-index) (>= channel-index (:num-channels puller)))
+    (js/Float32Array. 0)
+    (let [current (get-channel-samples-written puller channel-index)
+          previous (max 0 (or previous-samples-written 0))
+          delta (max 0 (- current previous))
+          count (min delta (:max-buffer-size puller))
+          buffer @(get (:channel-buffers puller) channel-index)]
+      (chronological-window buffer
+                            (get (:write-indices puller) channel-index)
+                            (get (:samples-written puller) channel-index)
+                            (:max-buffer-size puller)
+                            count))))
+
 (defn get-channel-count
   "Get the number of audio channels being captured."
   [^SamplePuller puller]
