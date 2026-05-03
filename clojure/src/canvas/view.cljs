@@ -133,9 +133,7 @@
        (when can-remove?
          [:button
           {:on-click #(on-remove canvas-id)
-           :style (merge (theme/button-style theme :danger)
-                         {:padding "3px 8px"
-                          :font-size "11px"})}
+           :style toolbar-button-style}
           "x"])]]
 
      ;; Canvas element

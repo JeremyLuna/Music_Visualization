@@ -101,7 +101,6 @@
     :surface "Surface"
     :text "Text"
     :primary "Primary"
-    :danger "Danger"
     :visualizer-a "Visualizer 1"
     :visualizer-b "Visualizer 2"
     :visualizer-c "Visualizer 3"
@@ -146,43 +145,67 @@
 (defn audio-player-controls
   "UI controls for audio playback (file upload, playback toggle, seek, volume)."
   []
-  (let [audio-player (get-in @state/app-state [:audio :player])
-        is-playing? (get-in @state/app-state [:audio :is-playing])
-        current-time (get-in @state/app-state [:audio :current-time])
-        duration (get-in @state/app-state [:audio :duration])
-        volume (get-in @state/app-state [:audio :volume])
-        theme (current-theme)
-        colors (theme/colors theme)]
-    [collapsible-section "Audio Player" theme
-     [:div {:style {:margin-bottom "10px"}}
-      [:input
-       {:type "file"
-        :accept "audio/*"
-        :style (merge (input-style theme) {:padding "4px"})
-        :on-change (fn [e]
-                     (let [file (-> e .-target .-files (aget 0))]
-                       (when (and audio-player file)
-                         (-> (player/load-audio-file audio-player file)
-                             (.catch (fn [err]
-                                       (.error js/console "Failed to load audio file:" err)))))))}]]
+  (r/with-let [selected-file-name (r/atom nil)]
+    (let [audio-player (get-in @state/app-state [:audio :player])
+          is-playing? (get-in @state/app-state [:audio :is-playing])
+          current-time (get-in @state/app-state [:audio :current-time])
+          duration (get-in @state/app-state [:audio :duration])
+          volume (get-in @state/app-state [:audio :volume])
+          theme (current-theme)
+          colors (theme/colors theme)]
+      [collapsible-section "Audio Player" theme
+       [:div {:style {:margin-bottom "10px"}}
+        [:input
+         {:id "audio-file-input"
+          :type "file"
+          :accept "audio/*"
+          :style {:display "none"}
+          :on-change (fn [e]
+                       (let [file (-> e .-target .-files (aget 0))]
+                         (reset! selected-file-name (some-> file .-name))
+                         (when (and audio-player file)
+                           (-> (player/load-audio-file audio-player file)
+                               (.catch (fn [err]
+                                         (.error js/console "Failed to load audio file:" err)))))))}]
+        [:div {:style {:display "flex"
+                       :align-items "center"
+                       :gap "8px"}}
+         [:label
+          {:html-for "audio-file-input"
+           :style (merge (theme/button-style theme :primary)
+                         {:display "inline-flex"
+                          :align-items "center"
+                          :justify-content "center"
+                          :min-height "30px"
+                          :padding "0 10px"
+                          :font-size "12px"
+                          :box-sizing "border-box"})}
+          "Choose File"]
+         [:span {:style {:min-width 0
+                         :overflow "hidden"
+                         :text-overflow "ellipsis"
+                         :white-space "nowrap"
+                         :font-size "12px"
+                         :color (:muted-text colors)}}
+          (or @selected-file-name "No file selected")]]]
 
-     [:div {:style {:display "flex" :gap "5px" :margin-bottom "10px"}}
-      [:button
-       {:on-click #(when audio-player (player/toggle-playback audio-player))
-        :disabled (nil? audio-player)
-        :aria-label (if is-playing? "Pause" "Play")
-        :title (if is-playing? "Pause" "Play")
-        :style (merge (theme/button-style theme :primary)
-                      {:width "32px" :height "32px"})}
-       (if is-playing? "⏸" "▶")]
-      [:button
-       {:on-click #(when audio-player (player/stop audio-player))
-        :disabled (nil? audio-player)
-        :aria-label "Stop"
-        :title "Stop"
-        :style (merge (theme/button-style theme)
-                      {:width "32px" :height "32px"})}
-       "⏹"]]
+       [:div {:style {:display "flex" :gap "5px" :margin-bottom "10px"}}
+        [:button
+         {:on-click #(when audio-player (player/toggle-playback audio-player))
+          :disabled (nil? audio-player)
+          :aria-label (if is-playing? "Pause" "Play")
+          :title (if is-playing? "Pause" "Play")
+          :style (merge (theme/button-style theme :primary)
+                        {:width "32px" :height "32px"})}
+         (if is-playing? "⏸" "▶")]
+        [:button
+         {:on-click #(when audio-player (player/stop audio-player))
+          :disabled (nil? audio-player)
+          :aria-label "Stop"
+          :title "Stop"
+          :style (merge (theme/button-style theme)
+                        {:width "32px" :height "32px"})}
+         "⏹"]]
 
      [:div {:style {:display "flex" :align-items "center" :gap "5px" :font-size "12px"}}
       [:span {:style {:color (:muted-text colors)}}
@@ -218,7 +241,7 @@
                        :font-size "11px"
                        :text-align "right"
                        :color (:muted-text colors)}}
-        (str (int (* 100 volume)) "%")]]]]))
+        (str (int (* 100 volume)) "%")]]]])))
 
 ;; ============================================================================
 ;; Theme Settings Component

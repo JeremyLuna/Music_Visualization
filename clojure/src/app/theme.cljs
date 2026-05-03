@@ -6,7 +6,6 @@
    :surface
    :text
    :primary
-   :danger
    :visualizer-a
    :visualizer-b
    :visualizer-c])
@@ -18,7 +17,6 @@
              :surface "#ffffff"
              :text "#18212b"
              :primary "#287d74"
-             :danger "#c94643"
              :visualizer-a "#16a085"
              :visualizer-b "#1f8f99"
              :visualizer-c "#f4d35e"}}
@@ -29,7 +27,6 @@
              :surface "#17212b"
              :text "#eef5f8"
              :primary "#ffb703"
-             :danger "#ef476f"
              :visualizer-a "#8ecae6"
              :visualizer-b "#219ebc"
              :visualizer-c "#fb8500"}}
@@ -40,7 +37,6 @@
              :surface "#1f2d4a"
              :text "#f8fafc"
              :primary "#66d9a4"
-             :danger "#ff6b6b"
              :visualizer-a "#66d9a4"
              :visualizer-b "#7c3aed"
              :visualizer-c "#f8e16c"}}
@@ -51,7 +47,6 @@
              :surface "#fffefa"
              :text "#24211c"
              :primary "#386641"
-             :danger "#bc4749"
              :visualizer-a "#6a994e"
              :visualizer-b "#a7c957"
              :visualizer-c "#f2e8cf"}}})
@@ -146,7 +141,7 @@
 
 (defn- expanded-colors
   [editable]
-  (let [{:keys [background surface text primary danger
+  (let [{:keys [background surface text primary
                 visualizer-a visualizer-b visualizer-c]} editable
         muted-text (mix text background 0.42)
         border (mix text background 0.78)
@@ -161,7 +156,6 @@
             :primary-text (readable-on primary)
             :canvas-background background
             :splitter (mix text background 0.72)
-            :danger danger
             :visualizer-background background
             :visualizer-baseline (mix background visualizer-a 0.28)
             :visualizer-low (mix background visualizer-b 0.16)
@@ -215,9 +209,6 @@
        :primary (merge base {:background (:primary c)
                              :border (str "1px solid " (:primary c))
                              :color (:primary-text c)})
-       :danger (merge base {:background (:danger c)
-                            :border (str "1px solid " (:danger c))
-                            :color "#ffffff"})
        :ghost (merge base {:background "transparent"
                            :color (:text c)})
        (merge base {:background (:surface-muted c)
