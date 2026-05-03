@@ -104,43 +104,116 @@
 
 (declare layout-tree-view)
 
+(defn- clamp
+  [value min-value max-value]
+  (-> value
+      (max min-value)
+      (min max-value)))
+
+(defn- set-body-drag-style!
+  [cursor]
+  (let [body-style (.. js/document -body -style)]
+    (set! (.-cursor body-style) cursor)
+    (set! (.-userSelect body-style) "none")))
+
+(defn- clear-body-drag-style! []
+  (let [body-style (.. js/document -body -style)]
+    (set! (.-cursor body-style) "")
+    (set! (.-userSelect body-style) "")))
+
+(defn- resize-split-from-event!
+  [split-id is-horizontal? container-el event]
+  (when container-el
+    (let [rect (.getBoundingClientRect container-el)
+          total-size (if is-horizontal? (.-width rect) (.-height rect))
+          pointer-pos (if is-horizontal?
+                        (- (.-clientX event) (.-left rect))
+                        (- (.-clientY event) (.-top rect)))]
+      (when (pos? total-size)
+        (let [min-percent (min 45 (* 100 (/ 100 total-size)))
+              left-size (clamp (* 100 (/ pointer-pos total-size))
+                               min-percent
+                               (- 100 min-percent))]
+          (state/dispatch :resize-split split-id [left-size (- 100 left-size)]))))))
+
 (defn split-node-view
   "Render a split node with two sub-trees and a splitter."
   [split-node on-split on-remove can-remove?]
-  (let [orientation (:orientation split-node)
-        is-horizontal? (= orientation :h)
-        flex-direction (if is-horizontal? "row" "column")]
-    
-    [:div
-     {:style {:display "flex"
-              :flex-direction flex-direction
-              :height "100%"
-              :width "100%"}}
-     
-     ;; Left/Top child
-     [:div
-      {:style {:flex 1
-               :overflow "hidden"
-               :min-width "100px"
-               :min-height "100px"}}
-      [layout-tree-view (:left split-node) on-split on-remove can-remove?]]
-     
-     ;; Splitter divider
-     [:div
-      {:style {:background "#ddd"
-               :cursor (if is-horizontal? "col-resize" "row-resize")
-               :width (if is-horizontal? "2px" "100%")
-               :height (if is-horizontal? "100%" "2px")
-               :flex-shrink 0
-               :user-select "none"}}]
-     
-     ;; Right/Bottom child
-     [:div
-      {:style {:flex 1
-               :overflow "hidden"
-               :min-width "100px"
-               :min-height "100px"}}
-      [layout-tree-view (:right split-node) on-split on-remove can-remove?]]]))
+  (r/with-let [container-ref (r/atom nil)
+               dragging? (r/atom false)]
+    (let [orientation (:orientation split-node)
+          split-id (:id split-node)
+          sizes (or (:sizes split-node) [50 50])
+          is-horizontal? (= orientation :h)
+          cursor (if is-horizontal? "col-resize" "row-resize")
+          flex-direction (if is-horizontal? "row" "column")
+          end-drag! (fn [event]
+                      (when @dragging?
+                        (reset! dragging? false)
+                        (clear-body-drag-style!)
+                        (try
+                          (.releasePointerCapture (.-currentTarget event) (.-pointerId event))
+                          (catch js/Error _ nil))))]
+
+      [:div
+       {:style {:display "flex"
+                :flex-direction flex-direction
+                :height "100%"
+                :width "100%"
+                :overflow "visible"
+                :position "relative"}
+        :ref (fn [el] (reset! container-ref el))}
+
+       ;; Left/Top child
+       [:div
+        {:style {:flex (first sizes)
+                 :overflow "hidden"
+                 :min-width "100px"
+                 :min-height "100px"}}
+        [layout-tree-view (:left split-node) on-split on-remove can-remove?]]
+
+       ;; Splitter divider. The visible rule is 2px; the child hit area is wider.
+       [:div
+        {:style {:background "#ddd"
+                 :cursor cursor
+                 :width (if is-horizontal? "2px" "100%")
+                 :height (if is-horizontal? "100%" "2px")
+                 :flex-shrink 0
+                 :position "relative"
+                 :overflow "visible"
+                 :user-select "none"
+                 :z-index 5}}
+        [:div
+         {:style (merge
+                  {:position "absolute"
+                   :cursor cursor
+                   :touch-action "none"
+                   :z-index 6}
+                  (if is-horizontal?
+                    {:top 0 :bottom 0 :left "-6px" :width "14px"}
+                    {:left 0 :right 0 :top "-6px" :height "14px"}))
+          :on-pointer-down (fn [event]
+                             (.preventDefault event)
+                             (reset! dragging? true)
+                             (set-body-drag-style! cursor)
+                             (.setPointerCapture (.-currentTarget event) (.-pointerId event))
+                             (resize-split-from-event! split-id is-horizontal? @container-ref event))
+          :on-pointer-move (fn [event]
+                             (when @dragging?
+                               (.preventDefault event)
+                               (resize-split-from-event! split-id is-horizontal? @container-ref event)))
+          :on-pointer-up end-drag!
+          :on-pointer-cancel end-drag!}]]
+
+       ;; Right/Bottom child
+       [:div
+        {:style {:flex (second sizes)
+                 :overflow "hidden"
+                 :min-width "100px"
+                 :min-height "100px"}}
+        [layout-tree-view (:right split-node) on-split on-remove can-remove?]]])
+    (finally
+      (clear-body-drag-style!))))
 
 (defn layout-tree-view
   "Recursively render the layout tree."

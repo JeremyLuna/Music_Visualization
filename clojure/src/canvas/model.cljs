@@ -28,16 +28,21 @@
   "Create a split container node.
    
    Args:
+   - id: Unique split ID
    - orientation: :h (horizontal split) or :v (vertical split)
    - left: Left/top child node
    - right: Right/bottom child node
    
    Returns: Split node map"
-  [orientation left right]
-  {:type :split
-   :orientation orientation
-   :left left
-   :right right})
+  ([orientation left right]
+   (create-split-node nil orientation left right))
+  ([id orientation left right]
+   {:type :split
+    :id id
+    :orientation orientation
+    :sizes [50 50]
+    :left left
+    :right right}))
 
 ;; ============================================================================
 ;; Tree Navigation & Query
@@ -137,10 +142,28 @@
   [tree canvas-id orientation new-canvas-id]
   (when-let [target-path (find-canvas-path tree canvas-id)]
     (let [target (node-at-path tree target-path)
-          new-split (create-split-node orientation
+          new-split (create-split-node (str "split-" canvas-id "-" new-canvas-id)
+                                       orientation
                                        target
                                        (create-canvas-node new-canvas-id :waveform {}))]
       (replace-at-path tree target-path new-split))))
+
+(defn update-split-sizes
+  "Update a split node's child size weights."
+  [tree split-id sizes]
+  (cond
+    (nil? tree) nil
+
+    (and (= (:type tree) :split)
+         (= (:id tree) split-id))
+    (assoc tree :sizes sizes)
+
+    (= (:type tree) :split)
+    (-> tree
+        (update :left update-split-sizes split-id sizes)
+        (update :right update-split-sizes split-id sizes))
+
+    :else tree))
 
 (defn remove-canvas
   "Remove a canvas from the tree.
@@ -223,7 +246,7 @@
       (= (:type tree) :canvas)
       (str pad "Canvas(id=" (:id tree) ", viz=" (:visualizer-type tree) ")")
       (= (:type tree) :split)
-      (str pad "Split(" (:orientation tree) ")\n"
+      (str pad "Split(id=" (:id tree) ", orientation=" (:orientation tree) ", sizes=" (:sizes tree) ")\n"
            (tree->string (:left tree) :indent (+ indent 2)) "\n"
            (tree->string (:right tree) :indent (+ indent 2)))
       :else (str pad "Unknown"))))

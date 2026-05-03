@@ -127,6 +127,10 @@
                                     (fn [m]
                                       (into {}
                                             (filter (fn [[id _]] (contains? remaining-ids id)) m)))))))))))
+
+    :resize-split
+    (let [[split-id sizes] args]
+      (swap! app-state update-in [:layout :root] model/update-split-sizes split-id sizes))
     
     :change-visualizer
     (let [[canvas-id visualizer-type] args]
