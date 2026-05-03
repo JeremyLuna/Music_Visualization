@@ -170,7 +170,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 - Use themes (which can be overridden)
 - have square and rounded theme
-- scrubber should show minutes:seconds
 - Add swapping behavior for dividers
 - canvas bar, settings button, and pointer should dissappear after inactivity (if settings panel is closed)
 - Production deployment is not wired in this directory.

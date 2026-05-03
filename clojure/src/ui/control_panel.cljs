@@ -15,6 +15,17 @@
                                     (canvas-ids-from-layout (:right node)))
     :else []))
 
+(defn- format-time
+  "Format a time value in seconds as minutes:seconds."
+  [seconds]
+  (let [safe-seconds (if (and (number? seconds) (js/isFinite seconds))
+                       (max 0 seconds)
+                       0)
+        total-seconds (js/Math.floor safe-seconds)
+        minutes (js/Math.floor (/ total-seconds 60))
+        seconds (mod total-seconds 60)]
+    (str minutes ":" (when (< seconds 10) "0") seconds)))
+
 ;; ============================================================================
 ;; Audio Player Control Component
 ;; ============================================================================
@@ -61,7 +72,7 @@
    
      ;; Time display and seek
      [:div {:style {:display "flex" :align-items "center" :gap "5px" :font-size "12px"}}
-      [:span (str (.toFixed current-time 1) " / " (.toFixed duration 1) "s")]
+      [:span (str (format-time current-time) " / " (format-time duration))]
       [:input
        {:type "range"
         :min 0
