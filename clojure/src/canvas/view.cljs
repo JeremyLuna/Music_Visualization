@@ -65,10 +65,16 @@
              :padding "5px"
              :border-bottom "1px solid #ccc"
              :display "flex"
+             :align-items "center"
              :gap "5px"
-             :font-size "12px"}}
+             :font-size "12px"
+             :position "relative"}}
     
-    [:span (str "Canvas " canvas-id)]
+    [:span
+     {:style {:position "absolute"
+              :left "50%"
+              :transform "translateX(-50%)"}}
+     (str "Canvas " canvas-id)]
     
     [:div
      {:style {:margin-left "auto"
