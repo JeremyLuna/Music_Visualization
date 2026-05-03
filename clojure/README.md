@@ -187,9 +187,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 - scrubber should show minutes:seconds
 - Add swapping behavior for dividers
 - canvas bar, settings button, and pointer should dissappear after inactivity (if settings panel is closed)
-- Keyboard spacebar handling is stubbed and logs a TODO.
-- The visual style is still utilitarian and inline-style heavy.
-- There are no automated tests yet for layout operations, state transitions, or visualizer settings.
 - Production deployment is not wired in this directory.
 - add "load demo" button with copyright free song?
 
