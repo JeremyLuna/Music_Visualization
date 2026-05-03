@@ -62,7 +62,8 @@
           (= key " ")
           (do
             (.preventDefault event)
-            (.log js/console "Play/pause toggle (TODO)"))
+            (when-let [audio-player @audio-player-instance]
+              (player/toggle-playback audio-player)))
           
           ;; Escape: hide control panel if open
           (= key "Escape")

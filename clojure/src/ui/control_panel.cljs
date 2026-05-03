@@ -20,7 +20,7 @@
 ;; ============================================================================
 
 (defn audio-player-controls
-  "UI controls for audio playback (file upload, play, pause, seek)."
+  "UI controls for audio playback (file upload, playback toggle, seek)."
   []
   (let [audio-player (get-in @state/app-state [:audio :player])
         is-playing? (get-in @state/app-state [:audio :is-playing])
@@ -45,20 +45,19 @@
      ;; Playback controls
      [:div {:style {:display "flex" :gap "5px" :margin-bottom "10px"}}
       [:button
-       {:on-click #(when audio-player (player/play audio-player))
+       {:on-click #(when audio-player (player/toggle-playback audio-player))
         :disabled (nil? audio-player)
-        :style {:padding "5px 10px" :cursor "pointer"}}
-       (if is-playing? "▶ Resume" "▶ Play")]
-      [:button
-       {:on-click #(when audio-player (player/pause audio-player))
-        :disabled (nil? audio-player)
-        :style {:padding "5px 10px" :cursor "pointer"}}
-       "⏸ Pause"]
+        :aria-label (if is-playing? "Pause" "Play")
+        :title (if is-playing? "Pause" "Play")
+        :style {:width "32px" :height "32px" :cursor "pointer"}}
+       (if is-playing? "⏸" "▶")]
       [:button
        {:on-click #(when audio-player (player/stop audio-player))
         :disabled (nil? audio-player)
-        :style {:padding "5px 10px" :cursor "pointer"}}
-       "⏹ Stop"]]
+        :aria-label "Stop"
+        :title "Stop"
+        :style {:width "32px" :height "32px" :cursor "pointer"}}
+       "⏹"]]
    
      ;; Time display and seek
      [:div {:style {:display "flex" :align-items "center" :gap "5px" :font-size "12px"}}

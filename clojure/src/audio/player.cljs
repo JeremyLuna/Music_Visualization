@@ -137,6 +137,17 @@
   (interop/pause-audio-element (:audio-element player))
   (state/dispatch :set-playing false))
 
+(defn toggle-playback
+  "Toggle playback between playing and paused.
+   
+   Args:
+   - player: AudioPlayer instance"
+  [^AudioPlayer player]
+  (let [audio-element (:audio-element player)]
+    (if (or (.-paused audio-element) (.-ended audio-element))
+      (play player)
+      (pause player))))
+
 (defn stop
   "Stop playback and reset to beginning.
    
