@@ -2,7 +2,8 @@
   "Audio sample capture and buffering via AudioWorklet.
    
    Captures real-time audio samples from the audio pipeline without affecting playback."
-  (:require [audio.interop :as interop]))
+  (:require [audio.interop :as interop]
+            [goog.object :as gobj]))
 
 ;; ============================================================================
 ;; Sample Puller - Captures audio samples on demand
@@ -14,6 +15,21 @@
    num-channels                 ;; Number of audio channels
    max-buffer-size])            ;; Maximum samples to keep per channel
 
+(defn- copy-samples!
+  [channel-buffer write-index max-buffer-size samples]
+  (let [write-idx @write-index
+        buffer @channel-buffer
+        samples-len (.-length samples)
+        available (- max-buffer-size write-idx)]
+    (if (>= available samples-len)
+      (do
+        (.set buffer samples write-idx)
+        (reset! write-index (+ write-idx samples-len)))
+      (do
+        (.set buffer (js/Float32Array. samples 0 available) write-idx)
+        (.set buffer (js/Float32Array. samples available) 0)
+        (reset! write-index (- samples-len available))))))
+
 (defn create-sample-puller
   "Create a new SamplePuller that captures samples from an audio worklet.
    
@@ -24,42 +40,24 @@
    
    Returns: SamplePuller instance"
   [worklet-node num-channels & {:keys [max-buffer-size] :or {max-buffer-size 8192}}]
-  
-  ;; Initialize buffer atoms for each channel
   (let [channel-buffers (mapv (fn [_] (atom (js/Float32Array. max-buffer-size)))
                               (range num-channels))
         write-indices (mapv (fn [_] (atom 0)) (range num-channels))
         port (.-port worklet-node)
         puller (->SamplePuller worklet-node channel-buffers num-channels max-buffer-size)]
-    
-    ;; Set up message listener for samples from worklet
-    (aset port "onmessage"
-          (fn [event]
-            (let [data (.-data event)
-                  msg-type (.-type data)]
-              (when (= msg-type "SAMPLES")
-                (let [channels (.-channels data)]
-                  ;; Copy each channel's samples into the circular buffer
-                  (doseq [ch (range num-channels)]
-                    (let [samples (aget channels ch)
-                          write-idx @(aget write-indices ch)
-                          buffer @(aget channel-buffers ch)
-                          samples-len (.-length samples)
-                          available (- max-buffer-size write-idx)]
-                      
-                      ;; Handle circular wrap-around if needed
-                      (if (>= available samples-len)
-                        ;; Simple case: fits in remaining space
-                        (do
-                          (.set buffer samples write-idx)
-                          (reset! (aget write-indices ch) (+ write-idx samples-len)))
-                        ;; Wrap-around case: split between end and start
-                        (do
-                          (.set buffer (js/Float32Array. samples 0 available) write-idx)
-                          (.set buffer (js/Float32Array. samples available) 0)
-                          (reset! (aget write-indices ch) (- samples-len available))))))))))
-    
-    puller)))
+    (gobj/set port "onmessage"
+              (fn [event]
+                (let [data (.-data event)
+                      msg-type (.-type data)]
+                  (when (= msg-type "SAMPLES")
+                    (let [channels (.-channels data)]
+                      (doseq [ch (range num-channels)]
+                        (when-let [samples (aget channels ch)]
+                          (copy-samples! (get channel-buffers ch)
+                                         (get write-indices ch)
+                                         max-buffer-size
+                                         samples))))))))
+    puller))
 
 (defn pull-all-samples
   "Extract all buffered samples from the puller.

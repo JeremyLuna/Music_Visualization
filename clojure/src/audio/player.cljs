@@ -8,6 +8,8 @@
 ;; Audio Player - High-level audio playback interface
 ;; ============================================================================
 
+(declare seek)
+
 (defrecord AudioPlayer
   [^js audio-context               ;; AudioContext instance
    ^js audio-element               ;; HTMLAudioElement for playback
@@ -85,11 +87,8 @@
                   ;; Decode audio data
                   (interop/decode-audio-data (:audio-context player) array-buffer)))
          (.then (fn [audio-buffer]
-                  ;; Create a blob URL and set as audio source
                   (let [blob-url (js/URL.createObjectURL file)
                         audio-element (:audio-element player)]
-                    (set! (.-src audio-element) blob-url)
-                    
                     ;; Listen for loadedmetadata to get duration
                     (set! (.-onloadedmetadata audio-element)
                           (fn []
@@ -109,7 +108,9 @@
                     ;; Handle load errors
                     (set! (.-onerror audio-element)
                           (fn [error]
-                            (reject error))))))
+                            (reject error)))
+                    (set! (.-src audio-element) blob-url)
+                    (.load audio-element))))
          (.catch reject)))))
 
 (defn play
@@ -119,7 +120,9 @@
    - player: AudioPlayer instance"
   [^AudioPlayer player]
   (let [audio-element (:audio-element player)]
-    (-> (interop/play-audio-element audio-element)
+    (-> (interop/resume-audio-context (:audio-context player))
+        (.then (fn []
+                 (interop/play-audio-element audio-element)))
         (.then (fn []
                  (state/dispatch :set-playing true)))
         (.catch (fn [e]

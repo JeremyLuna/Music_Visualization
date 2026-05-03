@@ -10,16 +10,18 @@
 (defn create-audio-context
   "Create a new AudioContext."
   []
-  (or (js/AudioContext.) (js/webkitAudioContext.)))
+  (if (exists? js/window.AudioContext)
+    (js* "new window.AudioContext()")
+    (js* "new window.webkitAudioContext()")))
 
 (defn create-media-element-source
   "Create MediaElementAudioSourceNode from an audio HTMLElement."
-  [audio-context audio-element]
-  (.createMediaElementAudioSource audio-context audio-element))
+  [^js audio-context audio-element]
+  (.createMediaElementSource audio-context audio-element))
 
 (defn create-gain-node
   "Create a GainNode for volume control."
-  [audio-context]
+  [^js audio-context]
   (.createGain audio-context))
 
 (defn connect-nodes
@@ -38,10 +40,21 @@
   "Load an AudioWorklet from a URL.
    
    Returns a promise that resolves with the WorkletNode once loaded."
-  [audio-context worklet-url worklet-name]
+  [^js audio-context worklet-url worklet-name]
   (-> (.addModule (.-audioWorklet audio-context) worklet-url)
       (.then (fn []
-               (.createAudioWorkletNode audio-context worklet-name)))))
+               (js/AudioWorkletNode.
+                audio-context
+                worklet-name
+                (clj->js {:numberOfInputs 1
+                          :numberOfOutputs 0}))))))
+
+(defn resume-audio-context
+  "Resume an AudioContext after a user gesture, if the browser suspended it."
+  [^js audio-context]
+  (if (= "suspended" (.-state audio-context))
+    (.resume audio-context)
+    (js/Promise.resolve audio-context)))
 
 (defn get-audio-context-destination
   "Get the destination (speakers) of an AudioContext."
