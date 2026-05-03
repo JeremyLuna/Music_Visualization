@@ -17,10 +17,7 @@
      [canvas-view/canvas-manager]]]
    
    ;; Control panel (side panel)
-   [control-panel/control-panel]
-   
-   [:footer {:style {:background "#333" :color "white" :padding "5px" :text-align "center" :font-size "12px"}}
-    "Status: ClojureScript implementation in progress"]])
+   [control-panel/control-panel]])
 
 ;; ============================================================================
 ;; Initialization
