@@ -11,9 +11,6 @@
 
 (defn app-root []
   [:div {:style {:display "flex" :flex-direction "column" :height "100vh" :font-family "sans-serif"}}
-   [:header {:style {:background "#333" :color "white" :padding "10px"}}
-    [:h1 "Music Visualization (ClojureScript)"]]
-   
    [:div {:style {:display "flex" :flex 1 :overflow "hidden"}}
     ;; Main content: Canvas area (full width)
     [:div {:style {:flex 1 :overflow "auto" :background "#f5f5f5" :position "relative"}}
