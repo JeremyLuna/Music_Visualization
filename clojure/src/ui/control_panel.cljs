@@ -249,7 +249,7 @@
               {:on-click #(state/dispatch :toggle-control-panel)
                :style {:position "fixed"
                        :left "10px"
-                       :bottom "20px"
+                       :top "10px"
                        :width "50px"
                        :height "50px"
                        :border-radius "50%"

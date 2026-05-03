@@ -168,8 +168,8 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
-- Use themes (which can be overridden)
-- have square and rounded theme
+- Use color themes (which can be overridden)
+- have square, and rounded square theme
 - Add swapping behavior for dividers
 - Production deployment is not wired in this directory.
 - add "load demo" button with copyright free song?
