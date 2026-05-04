@@ -52,7 +52,7 @@
              :visualizer-c "#f2e8cf"}}})
 
 (def default-theme
-  {:palette :studio
+  {:palette :aurora
    :shape :rounded
    :custom-colors {}})
 

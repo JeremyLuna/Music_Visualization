@@ -12,8 +12,8 @@
 
 (def default-settings
   {:buffer-size 2048
-   :line-color "#00ff00"
    :line-width 2
+   :line-color "#00ff00"
    :background-color "white"
    :baseline-color "#d8d8d8"})
 
@@ -104,7 +104,7 @@
   (->WaveformVisualizer
    (cond-> {}
      (some? buffer-size) (assoc :buffer-size buffer-size)
-     (some? line-color) (assoc :line-color line-color)
      (some? line-width) (assoc :line-width line-width)
+     (some? line-color) (assoc :line-color line-color)
      (:background-color options) (assoc :background-color (:background-color options))
      (:baseline-color options) (assoc :baseline-color (:baseline-color options)))))
