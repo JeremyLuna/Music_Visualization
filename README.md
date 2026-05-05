@@ -3,21 +3,10 @@ https://jeremyluna.github.io/Music_Visualization/
 
 This repo is for a single page app for music visualization
 you can upload a song file
-you can create and resize canvases
-you can assign the canvases visualizers
-I have a normal html/js/css stack version in ./vanilla_js
-I am getting into Clojure so I am working on a
-Clojure implementation as well.
+pick and customize visualizers
+customize the layout
 
 The ClojureScript implementation pins its Node/npm toolchain in `clojure/.nvmrc`, `clojure/.node-version`, `clojure/.npmrc`, and `clojure/package.json`. Use `npm ci` from `clojure/` for consistent installs and builds.
-
-To test the locally
-    cd vanilla_js
-    python -m http.server 8000
-in a browser, go to:
-    http://127.0.0.1:8000/
-to reload in browser after changes:
-    ctrl+shift+r
 
 RESOURCES:
 https://www.mathworks.com/help/wavelet/ref/vmd.html
