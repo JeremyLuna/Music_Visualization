@@ -5,12 +5,16 @@ Get the app running in 5 minutes!
 ## Prerequisites
 
 Make sure you have installed:
-- **Node.js 14+** (includes npm)
+- **Node.js 20.18.1**
+- **npm 10.8.2**
 - **Java 11+** (for ClojureScript compilation)
+
+The expected Node version is pinned in `.nvmrc` and `.node-version`. If you use `nvm`, run `nvm install` once, then `nvm use` whenever you enter this directory. `.npmrc` enables strict engine checks so the install fails clearly when Node or npm does not match.
 
 Check versions:
 ```bash
 node --version
+npm --version
 java -version
 ```
 
@@ -19,14 +23,16 @@ java -version
 1. **Navigate to the clojure directory:**
    ```bash
    cd clojure
+   nvm install
+   nvm use
    ```
 
 2. **Install npm dependencies:**
    ```bash
-   npm install
+   npm ci
    ```
 
-   This installs:
+   `npm ci` installs the exact dependency tree from `package-lock.json`, including:
    - shadow-cljs (build tool)
    - Reagent (React wrapper)
    - fftjs (FFT library)
@@ -44,6 +50,7 @@ java -version
 
 ```bash
 cd clojure
+nvm use
 npm run dev
 ```
 
@@ -61,6 +68,7 @@ Open http://localhost:8000 in your browser.
 **Terminal 1 - Build/Watch:**
 ```bash
 cd clojure
+nvm use
 npx shadow-cljs watch app
 ```
 
@@ -98,6 +106,7 @@ Then open http://localhost:8000
 In a third terminal:
 ```bash
 cd clojure
+nvm use
 npx shadow-cljs cljs-repl app
 ```
 
@@ -112,6 +121,7 @@ Then in the REPL, you can run:
 
 ```bash
 cd clojure
+nvm use
 npm run release
 ```
 

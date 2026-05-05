@@ -21,7 +21,11 @@ A ClojureScript port of the Music Visualization app using **Shadow-cljs** and **
 ```text
 clojure/
 ├── deps.edn                    # Clojure/ClojureScript dependencies and aliases
+├── .nvmrc                      # Preferred Node.js version for nvm
+├── .node-version               # Preferred Node.js version for asdf/mise/fnm
+├── .npmrc                      # Enforces Node/npm engine checks during install
 ├── package.json                # npm scripts and JS dependencies
+├── package-lock.json           # Locked npm dependency tree for reproducible installs
 ├── shadow-cljs.edn             # Shadow-cljs browser build configuration
 ├── public/
 │   ├── index.html              # Browser entry point
@@ -54,15 +58,28 @@ clojure/
 
 ### Prerequisites
 
-- Node.js 14+
+- Node.js 20.18.1
+- npm 10.8.2
 - Java 11+
+
+The Node version is pinned in `.nvmrc` and `.node-version`. If you use `nvm`, run:
+
+```bash
+cd clojure
+nvm install
+nvm use
+```
+
+`package.json` also declares the expected npm version through `packageManager`, and `.npmrc` enables strict engine checks so mismatched Node/npm versions fail early.
 
 ### Install
 
 ```bash
 cd clojure
-npm install
+npm ci
 ```
+
+Use `npm ci` for normal setup and builds. It installs exactly from `package-lock.json`, which makes `npm run dev`, `npm run release`, and the other npm scripts run against the same dependency tree on each machine.
 
 ## Running the App
 
@@ -70,6 +87,7 @@ Run the Shadow-cljs watcher:
 
 ```bash
 cd clojure
+nvm use
 npm run dev
 ```
 

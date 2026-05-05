@@ -9,6 +9,8 @@ I have a normal html/js/css stack version in ./vanilla_js
 I am getting into Clojure so I am working on a
 Clojure implementation as well.
 
+The ClojureScript implementation pins its Node/npm toolchain in `clojure/.nvmrc`, `clojure/.node-version`, `clojure/.npmrc`, and `clojure/package.json`. Use `npm ci` from `clojure/` for consistent installs and builds.
+
 To test the locally
     cd vanilla_js
     python -m http.server 8000
@@ -40,4 +42,3 @@ https://www.sonicvisualiser.org/
 https://www.videoproc.com/resource/spotify-visualizer.htm
 https://hydra.ojack.xyz/?sketch_id=ritchse_4
 https://butterchurnviz.com/
-

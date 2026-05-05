@@ -2,6 +2,11 @@
   "name": "music-visualization-clojurescript",
   "version": "0.1.0",
   "description": "Music visualization app in ClojureScript with Reagent and Shadow-cljs",
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": "20.18.1",
+    "npm": "10.8.2"
+  },
   "scripts": {
     "dev": "shadow-cljs watch app",
     "release": "shadow-cljs release app",
