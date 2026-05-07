@@ -239,6 +239,7 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 ## Todo List
 
 - Work on themes.
+- waveform needs grid, not reference line
 - Add swapping behavior for dividers.
 - Add analytic signal.
 - Add adjustable range for spectrogram.
