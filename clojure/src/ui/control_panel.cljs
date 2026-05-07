@@ -101,9 +101,9 @@
     :surface "Surface"
     :text "Text"
     :primary "Primary"
-    :visualizer-a "Visualizer 1"
-    :visualizer-b "Visualizer 2"
-    :visualizer-c "Visualizer 3"
+    :accent-a "Accent 1"
+    :accent-b "Accent 2"
+    :accent-c "Accent 3"
     (-> color-key name (.replaceAll "-" " "))))
 
 (defn- color-setting-row
@@ -321,7 +321,7 @@
         settings (or (:settings canvas-node) {})
         theme-state (current-theme)
         colors (theme/colors theme-state)
-        theme-viz-settings (theme/visualizer-settings theme-state)
+        theme-viz-settings (registry/theme-settings selected-viz theme-state)
         effective-settings (merge theme-viz-settings settings)]
     [collapsible-section (str "Canvas " canvas-id " Settings") theme-state
      [:div {:style {:margin-bottom "10px"}}

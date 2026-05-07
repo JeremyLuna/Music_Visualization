@@ -15,9 +15,11 @@
    
    Maps visualizer type keywords to factory functions."
   {:stft     {:name "STFT Spectrogram"
-              :factory stft/create-stft-visualizer}
+              :factory stft/create-stft-visualizer
+              :theme-settings stft/theme-settings}
    :waveform {:name "Waveform"
-              :factory waveform/create-waveform-visualizer}})
+              :factory waveform/create-waveform-visualizer
+              :theme-settings waveform/theme-settings}})
 
 ;; ============================================================================
 ;; Factory Functions
@@ -58,3 +60,12 @@
    Returns: Name string or nil if not found"
   [visualizer-type]
   (:name (get visualizer-registry visualizer-type)))
+
+(defn theme-settings
+  "Get theme-derived default settings for a visualizer type.
+
+   Visualizers own the mapping from theme colors to their setting keys."
+  [visualizer-type theme]
+  (if-let [settings-fn (get-in visualizer-registry [visualizer-type :theme-settings])]
+    (settings-fn theme)
+    {}))

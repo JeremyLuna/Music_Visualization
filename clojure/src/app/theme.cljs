@@ -6,9 +6,9 @@
    :surface
    :text
    :primary
-   :visualizer-a
-   :visualizer-b
-   :visualizer-c])
+   :accent-a
+   :accent-b
+   :accent-c])
 
 (def palettes
   {:studio
@@ -18,9 +18,9 @@
              :surface "#ffffff"
              :text "#18212b"
              :primary "#287d74"
-             :visualizer-a "#16a085"
-             :visualizer-b "#1f8f99"
-             :visualizer-c "#f4d35e"}}
+             :accent-a "#16a085"
+             :accent-b "#1f8f99"
+             :accent-c "#f4d35e"}}
 
    :night-drive
    {:name "Night Drive"
@@ -29,9 +29,9 @@
              :surface "#17212b"
              :text "#eef5f8"
              :primary "#ffb703"
-             :visualizer-a "#8ecae6"
-             :visualizer-b "#219ebc"
-             :visualizer-c "#fb8500"}}
+             :accent-a "#8ecae6"
+             :accent-b "#219ebc"
+             :accent-c "#fb8500"}}
 
    :aurora
    {:name "Aurora"
@@ -40,9 +40,9 @@
              :surface "#1f2d4a"
              :text "#f8fafc"
              :primary "#66d9a4"
-             :visualizer-a "#66d9a4"
-             :visualizer-b "#7c3aed"
-             :visualizer-c "#f8e16c"}}
+             :accent-a "#66d9a4"
+             :accent-b "#7c3aed"
+             :accent-c "#f8e16c"}}
 
    :paper
    {:name "Paper"
@@ -51,9 +51,9 @@
              :surface "#fffefa"
              :text "#24211c"
              :primary "#386641"
-             :visualizer-a "#6a994e"
-             :visualizer-b "#a7c957"
-             :visualizer-c "#f2e8cf"}}})
+             :accent-a "#6a994e"
+             :accent-b "#a7c957"
+             :accent-c "#f2e8cf"}}})
 
 (def default-theme
   {:palette :aurora
@@ -103,7 +103,7 @@
    (mix-channel g1 g2 amount)
    (mix-channel b1 b2 amount)])
 
-(defn- mix
+(defn mix
   [from-color to-color amount]
   (rgb->hex (mix-rgb (hex->rgb from-color) (hex->rgb to-color) amount)))
 
@@ -134,6 +134,13 @@
   [palette-id]
   (get-in palettes [palette-id :shape] :rounded))
 
+(defn- normalize-custom-colors
+  [custom-colors]
+  (cond-> (or custom-colors {})
+    (:visualizer-a custom-colors) (assoc :accent-a (:visualizer-a custom-colors))
+    (:visualizer-b custom-colors) (assoc :accent-b (:visualizer-b custom-colors))
+    (:visualizer-c custom-colors) (assoc :accent-c (:visualizer-c custom-colors))))
+
 (defn editable-colors
   [theme]
   (let [theme (merge default-theme (or theme {}))
@@ -143,13 +150,12 @@
                       (palette-colors :studio)
                       (palette-colors palette-id))]
     (select-keys (cond-> base-colors
-                   custom? (merge (:custom-colors theme)))
+                   custom? (merge (normalize-custom-colors (:custom-colors theme))))
                  palette-color-keys)))
 
 (defn- expanded-colors
   [editable]
-  (let [{:keys [background surface text primary
-                visualizer-a visualizer-b visualizer-c]} editable
+  (let [{:keys [background surface text primary]} editable
         muted-text (mix text background 0.42)
         border (mix text background 0.78)
         surface-muted (mix surface text 0.08)]
@@ -162,12 +168,7 @@
             :border border
             :primary-text (readable-on primary)
             :canvas-background background
-            :splitter (mix text background 0.72)
-            :visualizer-background background
-            :visualizer-baseline (mix background visualizer-a 0.28)
-            :visualizer-low (mix background visualizer-b 0.16)
-            :visualizer-mid visualizer-b
-            :visualizer-high (mix visualizer-c "#ffffff" 0.22)})))
+            :splitter (mix text background 0.72)})))
 
 (defn effective-theme
   [theme]
@@ -179,7 +180,8 @@
         editable (editable-colors theme)]
     (assoc theme
            :shape shape
-           :custom-colors (select-keys (:custom-colors theme) palette-color-keys)
+           :custom-colors (select-keys (normalize-custom-colors (:custom-colors theme))
+                                       palette-color-keys)
            :editable-colors editable
            :colors (expanded-colors editable))))
 
@@ -233,15 +235,3 @@
                            :color (:text c)})
        (merge base {:background (:surface-muted c)
                     :color (:text c)})))))
-
-(defn visualizer-settings
-  [theme]
-  (let [c (colors theme)]
-    {:background-color (:visualizer-background c)
-     :baseline-color (:visualizer-baseline c)
-     :line-color (:visualizer-a c)
-     :spectrogram-background-color (:visualizer-background c)
-     :spectrogram-low-color (:visualizer-low c)
-     :spectrogram-mid-color (:visualizer-mid c)
-     :spectrogram-high-color (:visualizer-high c)
-     :color-map :theme}))

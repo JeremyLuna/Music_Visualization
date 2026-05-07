@@ -232,14 +232,15 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 1. Add a new namespace under `clojure/src/visualizers/`.
 2. Implement `visualizers.protocol/IVisualizer`.
-3. Add the visualizer metadata and factory to `visualizers.registry/visualizer-registry`.
-4. Add settings controls in `ui.control-panel/visualizer-settings` if the visualizer has configurable options.
+3. Define a `theme-settings` function if the visualizer should derive default colors from the active theme.
+4. Add the visualizer metadata, factory, and theme settings function to `visualizers.registry/visualizer-registry`.
+5. Add settings controls in `ui.control-panel/visualizer-settings` if the visualizer has configurable options.
 
 ## Todo List
 
-- Add swapping behavior for dividers.
+- stft background and low should be the same thing.
 - Work on themes.
-- stft shouldn't have 2 backgrounds.
+- Add swapping behavior for dividers.
 - Add analytic signal.
 - Add adjustable range for spectrogram.
 - Add constant Q transform.

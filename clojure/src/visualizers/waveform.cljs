@@ -2,7 +2,8 @@
   "Time-domain waveform visualizer.
    
    Displays raw audio samples as a line drawing on a canvas."
-  (:require [visualizers.protocol :as protocol]
+  (:require [app.theme :as theme]
+            [visualizers.protocol :as protocol]
             [audio.interop :as interop]
             [audio.sample-puller :as puller]))
 
@@ -16,6 +17,13 @@
    :line-color "#00ff00"
    :background-color "white"
    :baseline-color "#d8d8d8"})
+
+(defn theme-settings
+  [theme-state]
+  (let [colors (theme/colors theme-state)]
+    {:background-color (:background colors)
+     :baseline-color (theme/mix (:background colors) (:accent-a colors) 0.28)
+     :line-color (:accent-a colors)}))
 
 (defn- effective-settings
   [settings]

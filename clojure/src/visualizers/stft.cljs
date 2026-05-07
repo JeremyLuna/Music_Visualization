@@ -2,7 +2,8 @@
   "STFT (Short-Time Fourier Transform) spectrogram visualizer.
 
    Displays frequency content over time using windowed, overlapping FFT frames."
-  (:require [visualizers.protocol :as protocol]
+  (:require [app.theme :as theme]
+            [visualizers.protocol :as protocol]
             [audio.interop :as interop]
             [audio.sample-puller :as puller]))
 
@@ -20,6 +21,15 @@
    :spectrogram-low-color "#000000"
    :spectrogram-mid-color "#666666"
    :spectrogram-high-color "#ffffff"})
+
+(defn theme-settings
+  [theme-state]
+  (let [colors (theme/colors theme-state)]
+    {:spectrogram-background-color (:background colors)
+     :spectrogram-low-color (theme/mix (:background colors) (:accent-b colors) 0.16)
+     :spectrogram-mid-color (:accent-b colors)
+     :spectrogram-high-color (theme/mix (:accent-c colors) "#ffffff" 0.22)
+     :color-map :theme}))
 
 (defn- effective-settings
   [settings]

@@ -1,7 +1,6 @@
 (ns visualizers.engine
   "Visualizer runtime loop that renders active visualizers per canvas."
   (:require [app.state :as state]
-            [app.theme :as theme]
             [canvas.model :as canvas-model]
             [visualizers.registry :as registry]
             [visualizers.protocol :as protocol]))
@@ -46,7 +45,7 @@
         sample-puller (get-in s [:audio :sample-puller])
         canvas-elements (:canvas-elements s)
         nodes (layout-canvas-nodes layout-root)
-        theme-settings (theme/visualizer-settings (get-in s [:ui :theme]))
+        theme-state (get-in s [:ui :theme])
         active-ids (set (map :id nodes))]
 
     ;; Remove orphan visualizer instances
@@ -60,7 +59,8 @@
       (let [canvas-id (:id node)
             canvas-el (get canvas-elements canvas-id)
             visualizer-type (or (:visualizer-type node) :waveform)
-            settings (merge theme-settings (or (:settings node) {}))]
+            settings (merge (registry/theme-settings visualizer-type theme-state)
+                            (or (:settings node) {}))]
         (when (and canvas-el sample-puller)
           (ensure-visualizer-instance! canvas-id visualizer-type settings)
           (sync-visualizer-settings! canvas-id settings)
