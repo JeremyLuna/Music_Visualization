@@ -211,7 +211,8 @@
       [:span {:style {:color (:muted-text colors)}}
        (str (format-time current-time) " / " (format-time duration))]
       [:input
-       {:type "range"
+       {:class "themed-range"
+        :type "range"
         :min 0
         :max (max duration 0.001)
         :value (min current-time (max duration 0.001))
@@ -228,7 +229,8 @@
                      :align-items "center"
                      :gap "8px"}}
        [:input
-        {:type "range"
+        {:class "themed-range"
+         :type "range"
          :min 0
          :max 100
          :value (* 100 volume)

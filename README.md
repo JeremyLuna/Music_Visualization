@@ -159,8 +159,6 @@ The compiled output is written to `public/js`. To serve the release bundle local
 npm run serve:release
 ```
 
-Production deployment is not currently wired in this repo.
-
 ## Troubleshooting
 
 ### App Does Not Load Or Shows "Loading App..."
@@ -239,7 +237,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
-- Make scroll bars and sliders squarable.
 - Add swapping behavior for dividers.
 - Make squareness part of the theme.
 - Work on themes.

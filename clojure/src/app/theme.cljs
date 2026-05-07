@@ -190,13 +190,20 @@
       "6px")
     "0"))
 
+(defn font-family
+  [theme]
+  (if (= (:shape (effective-theme theme)) :boxy)
+    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"))
+
 (defn control-style
   [theme]
   (let [c (colors theme)]
     {:background (:surface c)
      :color (:text c)
      :border (str "1px solid " (:border c))
-     :border-radius (radius theme :small)}))
+     :border-radius (radius theme :small)
+     :font-family (font-family theme)}))
 
 (defn button-style
   ([theme] (button-style theme :neutral))
@@ -204,7 +211,8 @@
    (let [c (colors theme)
          base {:border (str "1px solid " (:border c))
                :border-radius (radius theme :small)
-               :cursor "pointer"}]
+               :cursor "pointer"
+               :font-family (font-family theme)}]
      (case variant
        :primary (merge base {:background (:primary c)
                              :border (str "1px solid " (:primary c))

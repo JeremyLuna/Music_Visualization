@@ -13,6 +13,73 @@
 
 (def inactivity-timeout-ms 2000)
 
+(def boxy-theme-css
+  ".theme-shape-boxy {
+     scrollbar-width: thin;
+     scrollbar-color: var(--theme-primary) var(--theme-surface-muted);
+   }
+
+   .theme-shape-boxy * {
+     scrollbar-width: thin;
+     scrollbar-color: var(--theme-primary) var(--theme-surface-muted);
+   }
+
+   .theme-shape-boxy ::-webkit-scrollbar {
+     width: 12px;
+     height: 12px;
+   }
+
+   .theme-shape-boxy ::-webkit-scrollbar-track {
+     background: var(--theme-surface-muted);
+     border-radius: 0;
+   }
+
+   .theme-shape-boxy ::-webkit-scrollbar-thumb {
+     background: var(--theme-primary);
+     border: 2px solid var(--theme-surface-muted);
+     border-radius: 0;
+   }
+
+   .theme-shape-boxy .themed-range {
+     appearance: none;
+     -webkit-appearance: none;
+     height: 18px;
+     background: transparent;
+   }
+
+   .theme-shape-boxy .themed-range::-webkit-slider-runnable-track {
+     height: 8px;
+     background: var(--theme-surface-muted);
+     border: 1px solid var(--theme-border);
+     border-radius: 0;
+   }
+
+   .theme-shape-boxy .themed-range::-webkit-slider-thumb {
+     appearance: none;
+     -webkit-appearance: none;
+     width: 16px;
+     height: 16px;
+     margin-top: -5px;
+     background: var(--theme-primary);
+     border: 1px solid var(--theme-text);
+     border-radius: 0;
+   }
+
+   .theme-shape-boxy .themed-range::-moz-range-track {
+     height: 8px;
+     background: var(--theme-surface-muted);
+     border: 1px solid var(--theme-border);
+     border-radius: 0;
+   }
+
+   .theme-shape-boxy .themed-range::-moz-range-thumb {
+     width: 16px;
+     height: 16px;
+     background: var(--theme-primary);
+     border: 1px solid var(--theme-text);
+     border-radius: 0;
+   }")
+
 (defn app-root []
   (let [timeout-id (atom nil)
         clear-timeout! (fn []
@@ -50,13 +117,21 @@
         (clear-timeout!))
       :reagent-render
       (fn []
-        (let [colors (theme/colors (get-in @state/app-state [:ui :theme]))]
-          [:div {:style {:display "flex"
+        (let [theme-state (get-in @state/app-state [:ui :theme])
+              colors (theme/colors theme-state)
+              boxy? (= (:shape (theme/effective-theme theme-state)) :boxy)]
+          [:div {:class (when boxy? "theme-shape-boxy")
+                 :style {:display "flex"
                          :flex-direction "column"
                          :height "100vh"
-                         :font-family "sans-serif"
+                         :font-family (theme/font-family theme-state)
                          :background (:app-background colors)
-                         :color (:text colors)}}
+                         :color (:text colors)
+                         "--theme-primary" (:primary colors)
+                         "--theme-surface-muted" (:surface-muted colors)
+                         "--theme-border" (:border colors)
+                         "--theme-text" (:text colors)}}
+           [:style boxy-theme-css]
          [:div {:style {:display "flex" :flex 1 :overflow "hidden"}}
           ;; Main content: Canvas area (full width)
           [:div {:style {:flex 1
