@@ -238,7 +238,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 ## Todo List
 
 - Add swapping behavior for dividers.
-- Make squareness part of the theme.
 - Work on themes.
 - stft shouldn't have 2 backgrounds.
 - Add analytic signal.
