@@ -16,18 +16,38 @@
    :line-width 2
    :line-color "#00ff00"
    :background-color "white"
-   :baseline-color "#d8d8d8"})
+   :grid-color "#d8d8d8"})
 
 (defn theme-settings
   [theme-state]
   (let [colors (theme/colors theme-state)]
     {:background-color (:background colors)
-     :baseline-color (theme/mix (:background colors) (:accent-a colors) 0.28)
+     :grid-color (theme/mix (:background colors) (:accent-a colors) 0.28)
      :line-color (:accent-a colors)}))
 
 (defn- effective-settings
   [settings]
-  (merge default-settings settings))
+  (let [merged (merge default-settings settings)]
+    (cond-> merged
+      (and (nil? (:grid-color settings)) (:baseline-color settings))
+      (assoc :grid-color (:baseline-color settings)))))
+
+(defn- draw-grid!
+  [ctx canvas-width canvas-height grid-color]
+  (let [columns 8
+        rows 4]
+    (set! (.-strokeStyle ctx) grid-color)
+    (set! (.-lineWidth ctx) 1)
+    (.beginPath ctx)
+    (doseq [i (range (inc columns))]
+      (let [x (+ 0.5 (* (/ i columns) canvas-width))]
+        (.moveTo ctx x 0)
+        (.lineTo ctx x canvas-height)))
+    (doseq [i (range (inc rows))]
+      (let [y (+ 0.5 (* (/ i rows) canvas-height))]
+        (.moveTo ctx 0 y)
+        (.lineTo ctx canvas-width y)))
+    (.stroke ctx)))
 
 (defn- mono-samples
   [sample-puller buffer-size]
@@ -57,7 +77,7 @@
     (let [ctx (interop/get-canvas-context canvas-element)
           canvas-width (interop/get-canvas-width canvas-element)
           canvas-height (interop/get-canvas-height canvas-element)
-          {:keys [buffer-size line-color line-width background-color baseline-color]} (effective-settings settings)
+          {:keys [buffer-size line-color line-width background-color grid-color]} (effective-settings settings)
           samples (mono-samples sample-puller buffer-size)
           samples-len (.-length samples)
           center-y (/ canvas-height 2)
@@ -65,13 +85,7 @@
       (set! (.-fillStyle ctx) background-color)
       (.fillRect ctx 0 0 canvas-width canvas-height)
 
-      ;; Draw a center line so silence still gives visual feedback.
-      (set! (.-strokeStyle ctx) baseline-color)
-      (set! (.-lineWidth ctx) 1)
-      (.beginPath ctx)
-      (.moveTo ctx 0 center-y)
-      (.lineTo ctx canvas-width center-y)
-      (.stroke ctx)
+      (draw-grid! ctx canvas-width canvas-height grid-color)
 
       (when (pos? samples-len)
         (set! (.-strokeStyle ctx) line-color)
@@ -107,12 +121,14 @@
    - line-width: Line width in pixels (default 2)
    
    Returns: WaveformVisualizer instance"
-  [& {:keys [buffer-size line-color line-width]
+  [& {:keys [buffer-size line-color line-width grid-color baseline-color]
       :as options}]
   (->WaveformVisualizer
    (cond-> {}
      (some? buffer-size) (assoc :buffer-size buffer-size)
      (some? line-width) (assoc :line-width line-width)
      (some? line-color) (assoc :line-color line-color)
+     (some? grid-color) (assoc :grid-color grid-color)
+     (and (nil? grid-color) (some? baseline-color)) (assoc :grid-color baseline-color)
      (:background-color options) (assoc :background-color (:background-color options))
      (:baseline-color options) (assoc :baseline-color (:baseline-color options)))))

@@ -363,7 +363,7 @@
                                               {:line-width (js/parseInt (-> % .-target .-value))})}]
          [color-setting-row canvas-id settings effective-settings :line-color "Line"]
          [color-setting-row canvas-id settings effective-settings :background-color "Background"]
-         [color-setting-row canvas-id settings effective-settings :baseline-color "Baseline"]]
+         [color-setting-row canvas-id settings effective-settings :grid-color "Grid"]]
 
         :stft
         [:<>
