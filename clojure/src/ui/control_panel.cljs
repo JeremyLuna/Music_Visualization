@@ -387,7 +387,6 @@
           [:option {:value "theme"} "Theme Gradient"]
           [:option {:value "gray"} "Gray"]
           [:option {:value "hot"} "Hot"]]
-         [color-setting-row canvas-id settings effective-settings :spectrogram-background-color "Background"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-low-color "Low"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-mid-color "Mid"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-high-color "High"]]

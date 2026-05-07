@@ -238,7 +238,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
-- stft background and low should be the same thing.
 - Work on themes.
 - Add swapping behavior for dividers.
 - Add analytic signal.

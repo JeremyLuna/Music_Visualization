@@ -17,7 +17,6 @@
    :color-map :theme
    :min-db -100
    :max-db 0
-   :spectrogram-background-color "black"
    :spectrogram-low-color "#000000"
    :spectrogram-mid-color "#666666"
    :spectrogram-high-color "#ffffff"})
@@ -25,8 +24,7 @@
 (defn theme-settings
   [theme-state]
   (let [colors (theme/colors theme-state)]
-    {:spectrogram-background-color (:background colors)
-     :spectrogram-low-color (theme/mix (:background colors) (:accent-b colors) 0.16)
+    {:spectrogram-low-color (theme/mix (:background colors) (:accent-b colors) 0.16)
      :spectrogram-mid-color (:accent-b colors)
      :spectrogram-high-color (theme/mix (:accent-c colors) "#ffffff" 0.22)
      :color-map :theme}))
@@ -225,6 +223,14 @@
                             spectrogram-high-color)
     [intensity intensity intensity]))
 
+(defn- rgb-css
+  [[r g b]]
+  (str "rgb(" r "," g "," b ")"))
+
+(defn- background-color-for
+  [settings]
+  (rgb-css (color-for 0 settings)))
+
 (defn- draw-spectrogram-column!
   [canvas-element mags {:keys [min-db max-db] :as settings}]
   (let [ctx (interop/get-canvas-context canvas-element)
@@ -244,7 +250,7 @@
                 intensity (int (* norm 255))
                 [r g b] (color-for intensity settings)
                 y (* (- bin-count 1 i) bin-height)]
-            (set! (.-fillStyle ctx) (str "rgb(" r "," g "," b ")"))
+            (set! (.-fillStyle ctx) (rgb-css [r g b]))
             (.fillRect ctx column-x y 1 (max 1 bin-height))))))))
 
 (defn- clear-canvas!
@@ -257,7 +263,6 @@
 
 (def color-setting-keys
   [:color-map
-   :spectrogram-background-color
    :spectrogram-low-color
    :spectrogram-mid-color
    :spectrogram-high-color])
@@ -276,19 +281,20 @@
   protocol/IVisualizer
 
   (render [this canvas-element sample-puller]
-    (let [{:keys [fft-size hop-size spectrogram-background-color] :as eff-settings} (effective-settings settings)
+    (let [{:keys [fft-size hop-size] :as eff-settings} (effective-settings settings)
+          background-color (background-color-for eff-settings)
           canvas-width (interop/get-canvas-width canvas-element)
           canvas-height (interop/get-canvas-height canvas-element)
           canvas-size [canvas-width canvas-height]]
       (when (and (power-of-two? fft-size) (pos? canvas-width) (pos? canvas-height))
         (when (not= @last-canvas-size canvas-size)
           (reset! last-canvas-size canvas-size)
-          (clear-canvas! canvas-element spectrogram-background-color))
+          (clear-canvas! canvas-element background-color))
         (when (not= (:fft-size @window-state) fft-size)
           (reset! window-state {:fft-size fft-size
                                 :window (make-window fft-size)})
           (set! (.-length @sample-buffer) 0)
-          (clear-canvas! canvas-element spectrogram-background-color))
+          (clear-canvas! canvas-element background-color))
         (let [current-totals (current-sample-totals sample-puller)]
           (if (or (nil? @last-sample-totals)
                   (some true? (map < current-totals @last-sample-totals)))
@@ -333,7 +339,6 @@
 
    Returns: STFTVisualizer instance"
   [& {:keys [fft-size hop-size color-map min-db max-db
-             spectrogram-background-color
              spectrogram-low-color
              spectrogram-mid-color
              spectrogram-high-color]}]
@@ -344,7 +349,6 @@
      (some? color-map) (assoc :color-map color-map)
      (some? min-db) (assoc :min-db min-db)
      (some? max-db) (assoc :max-db max-db)
-     (some? spectrogram-background-color) (assoc :spectrogram-background-color spectrogram-background-color)
      (some? spectrogram-low-color) (assoc :spectrogram-low-color spectrogram-low-color)
      (some? spectrogram-mid-color) (assoc :spectrogram-mid-color spectrogram-mid-color)
      (some? spectrogram-high-color) (assoc :spectrogram-high-color spectrogram-high-color))
