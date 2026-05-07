@@ -250,7 +250,7 @@
 ;; ============================================================================
 
 (defn theme-settings
-  "Theme palette, shape, and custom color controls."
+  "Theme palette and custom color controls."
   []
   (let [theme-state (current-theme)
         effective-theme (theme/effective-theme theme-state)
@@ -263,31 +263,30 @@
                 :value (name (:palette effective-theme))
                 :on-change #(state/dispatch :set-theme-palette
                                             (keyword (-> % .-target .-value)))}
-       (for [{:keys [id name]} (theme/palette-options)]
+     (for [{:keys [id name]} (theme/palette-options)]
          ^{:key id}
          [:option {:value (clojure.core/name id)} name])]]
-
-     [:div {:style {:margin-bottom "10px"}}
-      [:label {:style (label-style effective-theme)} "Shape"]
-      [:div {:style {:display "grid"
-                     :grid-template-columns "1fr 1fr"
-                     :gap "6px"}}
-       (for [[shape label] [[:boxy "Boxy"] [:rounded "Rounded"]]]
-         ^{:key shape}
-         [:button {:on-click #(state/dispatch :set-theme-shape shape)
-                   :style (merge (theme/button-style effective-theme
-                                                     (if (= (:shape effective-theme) shape)
-                                                       :primary
-                                                       :neutral))
-                                 {:height "30px"
-                                  :font-size "12px"})}
-          label])]]
 
      (when custom?
        [:div {:style {:background (:surface-muted colors)
                       :padding "8px"
                       :border-radius (theme/radius effective-theme :medium)
                       :font-size "11px"}}
+        [:div {:style {:margin-bottom "10px"}}
+         [:label {:style (label-style effective-theme)} "Shape"]
+         [:div {:style {:display "grid"
+                        :grid-template-columns "1fr 1fr"
+                        :gap "6px"}}
+          (for [[shape label] [[:boxy "Boxy"] [:rounded "Rounded"]]]
+            ^{:key shape}
+            [:button {:on-click #(state/dispatch :set-theme-shape shape)
+                      :style (merge (theme/button-style effective-theme
+                                                        (if (= (:shape effective-theme) shape)
+                                                          :primary
+                                                          :neutral))
+                                    {:height "30px"
+                                     :font-size "12px"})}
+             label])]]
         (for [color-key theme/palette-color-keys]
           ^{:key color-key}
           [:div {:style {:display "grid"

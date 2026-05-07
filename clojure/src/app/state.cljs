@@ -104,15 +104,24 @@
       (swap! app-state
              (fn [s]
                (let [current-theme (get-in s [:ui :theme])
+                     effective-theme (theme/effective-theme current-theme)
                      custom-colors (get current-theme :custom-colors {})]
-                 (cond-> (assoc-in s [:ui :theme :palette] palette-id)
+                 (cond-> (-> s
+                             (assoc-in [:ui :theme :palette] palette-id)
+                             (update-in [:ui :theme] dissoc :shape))
                    (and (= palette-id :custom) (empty? custom-colors))
                    (assoc-in [:ui :theme :custom-colors]
-                             (theme/editable-colors current-theme)))))))
+                             (theme/editable-colors current-theme))
+                   (= palette-id :custom)
+                   (assoc-in [:ui :theme :shape] (:shape effective-theme)))))))
 
     :set-theme-shape
     (let [[shape] args]
-      (swap! app-state assoc-in [:ui :theme :shape] shape))
+      (swap! app-state
+             (fn [s]
+               (if (= (get-in s [:ui :theme :palette]) :custom)
+                 (assoc-in s [:ui :theme :shape] shape)
+                 s))))
 
     :set-theme-custom-color
     (let [[color-key color-value] args]

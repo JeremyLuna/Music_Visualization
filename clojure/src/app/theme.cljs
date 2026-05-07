@@ -13,6 +13,7 @@
 (def palettes
   {:studio
    {:name "Studio"
+    :shape :rounded
     :colors {:background "#f4f6f8"
              :surface "#ffffff"
              :text "#18212b"
@@ -23,6 +24,7 @@
 
    :night-drive
    {:name "Night Drive"
+    :shape :boxy
     :colors {:background "#05080d"
              :surface "#17212b"
              :text "#eef5f8"
@@ -33,6 +35,7 @@
 
    :aurora
    {:name "Aurora"
+    :shape :rounded
     :colors {:background "#0b1324"
              :surface "#1f2d4a"
              :text "#f8fafc"
@@ -43,6 +46,7 @@
 
    :paper
    {:name "Paper"
+    :shape :boxy
     :colors {:background "#f8f7f3"
              :surface "#fffefa"
              :text "#24211c"
@@ -53,7 +57,6 @@
 
 (def default-theme
   {:palette :aurora
-   :shape :rounded
    :custom-colors {}})
 
 (defn- clamp-channel
@@ -127,6 +130,10 @@
   [palette-id]
   (get-in palettes [palette-id :colors] (get-in palettes [:studio :colors])))
 
+(defn palette-shape
+  [palette-id]
+  (get-in palettes [palette-id :shape] :rounded))
+
 (defn editable-colors
   [theme]
   (let [theme (merge default-theme (or theme {}))
@@ -165,8 +172,13 @@
 (defn effective-theme
   [theme]
   (let [theme (merge default-theme (or theme {}))
+        palette-id (:palette theme)
+        shape (if (= palette-id :custom)
+                (or (:shape theme) :rounded)
+                (palette-shape palette-id))
         editable (editable-colors theme)]
     (assoc theme
+           :shape shape
            :custom-colors (select-keys (:custom-colors theme) palette-color-keys)
            :editable-colors editable
            :colors (expanded-colors editable))))
