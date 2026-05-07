@@ -53,7 +53,73 @@
              :primary "#386641"
              :accent-a "#6a994e"
              :accent-b "#a7c957"
-             :accent-c "#f2e8cf"}}})
+             :accent-c "#f2e8cf"}}
+
+   :vaporwave
+   {:name "Vaporwave"
+    :shape :rounded
+    :colors {:background "#20123a"
+             :surface "#35205f"
+             :text "#fff4ff"
+             :primary "#ff71ce"
+             :accent-a "#01cdfe"
+             :accent-b "#b967ff"
+             :accent-c "#fffb96"}}
+
+   :high-contrast-dark
+   {:name "High Contrast (Dark)"
+    :shape :boxy
+    :colors {:background "#000000"
+             :surface "#111111"
+             :text "#ffffff"
+             :primary "#ffff00"
+             :accent-a "#00ffff"
+             :accent-b "#ff00ff"
+             :accent-c "#ff4d00"}}
+
+   :high-contrast-light
+   {:name "High Contrast (Light)"
+    :shape :boxy
+    :colors {:background "#ffffff"
+             :surface "#f2f2f2"
+             :text "#000000"
+             :primary "#003cff"
+             :accent-a "#005f00"
+             :accent-b "#7a00cc"
+             :accent-c "#b00000"}}
+
+   :white-rose
+   {:name "White Rose"
+    :shape :rounded
+    :colors {:background "#fff7f9"
+             :surface "#ffffff"
+             :text "#2d151c"
+             :primary "#c81d4f"
+             :accent-a "#e84a7a"
+             :accent-b "#b5122d"
+             :accent-c "#f6c945"}}
+
+   :black-rose
+   {:name "Black Rose"
+    :shape :rounded
+    :colors {:background "#08040d"
+             :surface "#1a0f24"
+             :text "#fff1f8"
+             :primary "#ff4fa3"
+             :accent-a "#d946ef"
+             :accent-b "#8b5cf6"
+             :accent-c "#f6e27f"}}
+
+   :green-phosphor
+   {:name "Green Phosphor"
+    :shape :boxy
+    :colors {:background "#020702"
+             :surface "#071407"
+             :text "#d8ffd8"
+             :primary "#39ff14"
+             :accent-a "#39ff14"
+             :accent-b "#00c853"
+             :accent-c "#b6ff6a"}}})
 
 (def default-theme
   {:palette :aurora
