@@ -12,7 +12,7 @@
 
 (def palettes
   {:studio
-   {:name "Studio"
+   {:name "Studio" ; modern light web look
     :shape :rounded
     :colors {:background "#f4f6f8"
              :surface "#ffffff"
@@ -21,31 +21,9 @@
              :accent-a "#16a085"
              :accent-b "#1f8f99"
              :accent-c "#f4d35e"}}
-
-   :night-drive
-   {:name "Night Drive"
-    :shape :boxy
-    :colors {:background "#05080d"
-             :surface "#17212b"
-             :text "#eef5f8"
-             :primary "#ffb703"
-             :accent-a "#8ecae6"
-             :accent-b "#219ebc"
-             :accent-c "#fb8500"}}
-
-   :aurora
-   {:name "Aurora"
-    :shape :rounded
-    :colors {:background "#0b1324"
-             :surface "#1f2d4a"
-             :text "#f8fafc"
-             :primary "#66d9a4"
-             :accent-a "#66d9a4"
-             :accent-b "#7c3aed"
-             :accent-c "#f8e16c"}}
-
-   :paper
-   {:name "Paper"
+   
+   :papyrus
+   {:name "Papyrus" ; comfy graphite on beige
     :shape :boxy
     :colors {:background "#f8f7f3"
              :surface "#fffefa"
@@ -55,8 +33,19 @@
              :accent-b "#a7c957"
              :accent-c "#f2e8cf"}}
 
+   :night-drive
+   {:name "Night Drive" ; black, dark purple, hazard orange
+    :shape :boxy
+    :colors {:background "#05080d"
+             :surface "#17212b"
+             :text "#eef5f8"
+             :primary "#ffb703"
+             :accent-a "#8ecae6"
+             :accent-b "#219ebc"
+             :accent-c "#fb8500"}}
+   
    :vaporwave
-   {:name "Vaporwave"
+   {:name "Vaporwave" ; lighter than night drive, pastels
     :shape :rounded
     :colors {:background "#20123a"
              :surface "#35205f"
@@ -66,30 +55,41 @@
              :accent-b "#b967ff"
              :accent-c "#fffb96"}}
 
+   :aurora
+   {:name "Aurora" ; Blue to green
+    :shape :rounded
+    :colors {:background "#0b1324"
+             :surface "#1f2d4a"
+             :text "#f8fafc"
+             :primary "#66d9a4"
+             :accent-a "#66d9a4"
+             :accent-b "#7c3aed"
+             :accent-c "#f8e16c"}}
+
    :high-contrast-dark
    {:name "High Contrast (Dark)"
     :shape :boxy
     :colors {:background "#000000"
-             :surface "#111111"
+             :surface "#000000"
              :text "#ffffff"
-             :primary "#ffff00"
-             :accent-a "#00ffff"
-             :accent-b "#ff00ff"
-             :accent-c "#ff4d00"}}
+             :primary "#ffffff"
+             :accent-a "#ffffff"
+             :accent-b "#ffffff"
+             :accent-c "#ffffff"}}
 
    :high-contrast-light
    {:name "High Contrast (Light)"
     :shape :boxy
     :colors {:background "#ffffff"
-             :surface "#f2f2f2"
+             :surface "#ffffff"
              :text "#000000"
-             :primary "#003cff"
-             :accent-a "#005f00"
-             :accent-b "#7a00cc"
-             :accent-c "#b00000"}}
+             :primary "#000000"
+             :accent-a "#000000"
+             :accent-b "#000000"
+             :accent-c "#000000"}}
 
    :white-rose
-   {:name "White Rose"
+   {:name "White Rose" ; white and pink
     :shape :rounded
     :colors {:background "#fff7f9"
              :surface "#ffffff"
@@ -100,7 +100,7 @@
              :accent-c "#f6c945"}}
 
    :black-rose
-   {:name "Black Rose"
+   {:name "Black Rose" ; black and purple
     :shape :rounded
     :colors {:background "#08040d"
              :surface "#1a0f24"
@@ -111,7 +111,7 @@
              :accent-c "#f6e27f"}}
 
    :green-phosphor
-   {:name "Green Phosphor"
+   {:name "Green Phosphor" ; black and green
     :shape :boxy
     :colors {:background "#020702"
              :surface "#071407"

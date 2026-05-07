@@ -24,9 +24,9 @@
 (defn theme-settings
   [theme-state]
   (let [colors (theme/colors theme-state)]
-    {:spectrogram-low-color (theme/mix (:background colors) (:accent-b colors) 0.16)
+    {:spectrogram-low-color (:background colors)
      :spectrogram-mid-color (:accent-b colors)
-     :spectrogram-high-color (theme/mix (:accent-c colors) "#ffffff" 0.22)
+     :spectrogram-high-color (:accent-c colors)
      :color-map :theme}))
 
 (defn- effective-settings
