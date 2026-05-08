@@ -121,6 +121,18 @@
              :accent-b "#00ff00"
              :accent-c "#00ff00"}}})
 
+(def palette-order
+  [:studio
+   :papyrus
+   :night-drive
+   :vaporwave
+   :aurora
+   :high-contrast-dark
+   :high-contrast-light
+   :white-rose
+   :black-rose
+   :green-phosphor])
+
 (def default-theme
   {:palette :aurora
    :custom-colors {}})
@@ -176,9 +188,9 @@
 (defn palette-options
   []
   (conj
-   (mapv (fn [[id {:keys [name]}]]
-           {:id id :name name})
-         palettes)
+   (mapv (fn [id]
+           {:id id :name (get-in palettes [id :name])})
+         palette-order)
    {:id :custom :name "Custom"}))
 
 (defn palette-colors
