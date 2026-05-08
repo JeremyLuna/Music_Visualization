@@ -14,24 +14,24 @@
   {:studio
    {:name "Studio" ; modern light web look
     :shape :rounded
-    :colors {:background "#f4f6f8"
-             :surface "#ffffff"
-             :text "#18212b"
-             :primary "#287d74"
-             :accent-a "#16a085"
-             :accent-b "#1f8f99"
-             :accent-c "#f4d35e"}}
+    :colors {:background "#F8FAFC"
+             :surface    "#FFFFFF"
+             :text       "#0F172A"
+             :primary    "#4F46E5"
+             :accent-a   "#06B6D4"
+             :accent-b   "#F59E0B"
+             :accent-c   "#10B981"}}
    
    :papyrus
    {:name "Papyrus" ; comfy graphite on beige
     :shape :boxy
-    :colors {:background "#f8f7f3"
-             :surface "#fffefa"
-             :text "#24211c"
-             :primary "#386641"
-             :accent-a "#6a994e"
-             :accent-b "#a7c957"
-             :accent-c "#f2e8cf"}}
+    :colors {:background "#E9DFC8"
+             :surface "#F4ECD8"
+             :text "#3B3833"
+             :primary "#5A5248"
+             :accent-a "#A67C52"
+             :accent-b "#7A8B78"
+             :accent-c "#B85C38"}}
 
    :night-drive
    {:name "Night Drive" ; black, dark purple, hazard orange
@@ -56,15 +56,15 @@
              :accent-c "#fffb96"}}
 
    :aurora
-   {:name "Aurora" ; Blue to green
+   {:name "Aurora" ; nighttime blues to greens
     :shape :rounded
-    :colors {:background "#0b1324"
-             :surface "#1f2d4a"
-             :text "#f8fafc"
-             :primary "#66d9a4"
-             :accent-a "#66d9a4"
-             :accent-b "#7c3aed"
-             :accent-c "#f8e16c"}}
+    :colors {:background "#07131F" ; deep night blue
+             :surface "#102235"    ; elevated panels/cards
+             :text "#E6F7FF"       ; soft icy white
+             :primary "#4FD1C5"    ; aurora teal
+             :accent-a "#3B82F6"   ; electric blue
+             :accent-b "#14B8A6"   ; green-teal
+             :accent-c "#8B5CF6"}} ; faint polar violet}
 
    :high-contrast-dark
    {:name "High Contrast (Dark)"
@@ -89,37 +89,37 @@
              :accent-c "#000000"}}
 
    :white-rose
-   {:name "White Rose" ; white and pink
+   {:name "White Rose" ; soft white and blush pink
     :shape :rounded
-    :colors {:background "#fff7f9"
-             :surface "#ffffff"
-             :text "#2d151c"
-             :primary "#c81d4f"
-             :accent-a "#e84a7a"
-             :accent-b "#b5122d"
-             :accent-c "#f6c945"}}
-
+    :colors {:background "#fffafc"  ; warm white with pink tint
+             :surface    "#ffffff"  ; clean card surface
+             :text       "#c97a9a"  ; muted plum-gray for readability
+             :primary    "#e8a9c1"  ; rose pink
+             :accent-a   "#f6d6e2"  ; pale blush
+             :accent-b   "#c97a9a"  ; dusty rose
+             :accent-c   "#ffe8f0"}} ; very light pink highlight
+   
    :black-rose
-   {:name "Black Rose" ; black and purple
+   {:name "Black Rose" ; deep black and rich purple
     :shape :rounded
-    :colors {:background "#08040d"
-             :surface "#1a0f24"
-             :text "#fff1f8"
-             :primary "#ff4fa3"
-             :accent-a "#d946ef"
-             :accent-b "#8b5cf6"
-             :accent-c "#f6e27f"}}
+    :colors {:background "#121014"  ; near-black
+             :surface    "#1c1720"  ; elevated dark surface
+             :text       "#8e80ff"  ; soft lavender-white
+             :primary    "#8b5cf6"  ; vivid violet
+             :accent-a   "#c084fc"  ; orchid purple
+             :accent-b   "#4c1d95"  ; deep royal purple
+             :accent-c   "#ec4899"}} ; rose-magenta contrast
 
    :green-phosphor
    {:name "Green Phosphor" ; black and green
     :shape :boxy
-    :colors {:background "#020702"
-             :surface "#071407"
-             :text "#d8ffd8"
-             :primary "#39ff14"
-             :accent-a "#39ff14"
-             :accent-b "#00c853"
-             :accent-c "#b6ff6a"}}})
+    :colors {:background "#000000"
+             :surface "#000000"
+             :text "#00ff00"
+             :primary "#00ff00"
+             :accent-a "#00ff00"
+             :accent-b "#00ff00"
+             :accent-c "#00ff00"}}})
 
 (def default-theme
   {:palette :aurora
@@ -173,17 +173,6 @@
   [from-color to-color amount]
   (rgb->hex (mix-rgb (hex->rgb from-color) (hex->rgb to-color) amount)))
 
-(defn- relative-lightness
-  [hex-color]
-  (let [[r g b] (hex->rgb hex-color)]
-    (/ (+ (* 0.299 r) (* 0.587 g) (* 0.114 b)) 255)))
-
-(defn- readable-on
-  [hex-color]
-  (if (> (relative-lightness hex-color) 0.62)
-    "#101820"
-    "#ffffff"))
-
 (defn palette-options
   []
   (conj
@@ -221,7 +210,7 @@
 
 (defn- expanded-colors
   [editable]
-  (let [{:keys [background surface text primary]} editable
+  (let [{:keys [background surface text]} editable
         muted-text (mix text background 0.42)
         border (mix text background 0.78)
         surface-muted (mix surface text 0.08)]
@@ -232,7 +221,7 @@
             :surface-muted surface-muted
             :muted-text muted-text
             :border border
-            :primary-text (readable-on primary)
+            :primary-text background
             :canvas-background background
             :splitter (mix text background 0.72)})))
 
