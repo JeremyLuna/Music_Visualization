@@ -248,6 +248,17 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 - Add spiral levels visualization.
 - Deploy to pages.
 - Add a "load demo" button with a copyright-free song.
+- Add live Audio feature extraction
+- Add spotify input
+- add spotify audio features
+- add mic input
+- Add audio feature non-technical visualizers
+    - add night drive visualizer
+    - add band playing visualizer, where you can pick character models
+    - add rain and lightning visualizer
+    - add dj dance floor visualizer
+        - can reuse character models for dance floor
+        - can have screen behind dj that nests a visualizer
 
 ## Resources
 
