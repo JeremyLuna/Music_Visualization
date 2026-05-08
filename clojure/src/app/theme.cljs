@@ -15,9 +15,9 @@
    {:name "Studio" ; modern light web look
     :shape :rounded
     :colors {:background "#F8FAFC"
-             :surface    "#FFFFFF"
+             :surface    "#ffffff"
              :text       "#0F172A"
-             :primary    "#4F46E5"
+             :primary    "#4f4dff"
              :accent-a   "#06B6D4"
              :accent-b   "#F59E0B"
              :accent-c   "#10B981"}}
