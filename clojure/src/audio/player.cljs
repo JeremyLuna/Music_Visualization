@@ -16,7 +16,8 @@
    ^js media-source                ;; MediaElementAudioSourceNode
    ^js gain-node                   ;; GainNode for volume control
    ^js worklet-node                ;; AudioWorkletNode for sample capture
-   sample-puller])                 ;; SamplePuller instance
+   sample-puller                   ;; SamplePuller instance
+   object-url])                    ;; Atom holding the active file blob URL
 
 (defn ^:async create-audio-player
   "Create a new AudioPlayer with Web Audio API graph.
@@ -55,7 +56,13 @@
                       
                       ;; Create sample puller
                       (let [sp (puller/create-sample-puller worklet-node 2 :max-buffer-size 8192)
-                            player (->AudioPlayer audio-context audio-element media-source gain-node worklet-node sp)]
+                            player (->AudioPlayer audio-context
+                                                  audio-element
+                                                  media-source
+                                                  gain-node
+                                                  worklet-node
+                                                  sp
+                                                  (atom nil))]
                         
                         ;; Hide audio element (we just use it for playback control)
                         (set! (.-hidden audio-element) true)
@@ -84,37 +91,44 @@
   [^AudioPlayer player file]
   (js/Promise.
    (fn [resolve reject]
-     ;; Read file as array buffer
-     (-> (interop/file-reader-read-array-buffer file)
-         (.then (fn [array-buffer]
-                  ;; Decode audio data
-                  (interop/decode-audio-data (:audio-context player) array-buffer)))
-         (.then (fn [audio-buffer]
-                  (let [blob-url (js/URL.createObjectURL file)
-                        audio-element (:audio-element player)]
-                    ;; Listen for loadedmetadata to get duration
-                    (set! (.-onloadedmetadata audio-element)
-                          (fn []
-                            (let [duration (interop/get-audio-element-duration audio-element)]
-                              (state/dispatch :set-duration duration))
-                            (state/dispatch :set-current-time 0)
-                            (set! (.-onloadedmetadata audio-element) nil)
-                            (resolve audio-element)))
-                    (set! (.-ontimeupdate audio-element)
-                          (fn []
-                            (state/dispatch :set-current-time
-                                            (interop/get-audio-element-current-time audio-element))))
-                    (set! (.-onended audio-element)
-                          (fn []
-                            (state/dispatch :set-playing false)))
-                    
-                    ;; Handle load errors
-                    (set! (.-onerror audio-element)
-                          (fn [error]
-                            (reject error)))
-                    (set! (.-src audio-element) blob-url)
-                    (.load audio-element))))
-         (.catch reject)))))
+     (try
+       (let [blob-url (js/URL.createObjectURL file)
+             audio-element (:audio-element player)
+             object-url (:object-url player)
+             previous-url @object-url]
+         (reset! object-url blob-url)
+
+         ;; Listen for loadedmetadata to get duration
+         (set! (.-onloadedmetadata audio-element)
+               (fn []
+                 (let [duration (interop/get-audio-element-duration audio-element)]
+                   (state/dispatch :set-duration duration))
+                 (state/dispatch :set-current-time 0)
+                 (set! (.-onloadedmetadata audio-element) nil)
+                 (resolve audio-element)))
+         (set! (.-ontimeupdate audio-element)
+               (fn []
+                 (state/dispatch :set-current-time
+                                 (interop/get-audio-element-current-time audio-element))))
+         (set! (.-onended audio-element)
+               (fn []
+                 (state/dispatch :set-playing false)))
+
+         ;; Handle load errors
+         (set! (.-onerror audio-element)
+               (fn [error]
+                 (set! (.-onerror audio-element) nil)
+                 (when (= @object-url blob-url)
+                   (reset! object-url nil))
+                 (js/URL.revokeObjectURL blob-url)
+                 (reject error)))
+         (set! (.-src audio-element) blob-url)
+         (.load audio-element)
+
+         (when previous-url
+           (js/URL.revokeObjectURL previous-url)))
+       (catch :default e
+         (reject e))))))
 
 (defn play
   "Start playback.
