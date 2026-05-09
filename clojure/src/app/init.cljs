@@ -14,6 +14,7 @@
 
 (defonce audio-player-instance (atom nil))
 (defonce react-root (atom nil))
+(defonce keyboard-shortcuts-handler (atom nil))
 
 ;; ============================================================================
 ;; Initialization Functions
@@ -54,22 +55,25 @@
 (defn setup-keyboard-shortcuts
   "Set up keyboard shortcuts for common actions."
   []
-  (js/document.addEventListener "keydown"
-    (fn [event]
-      (let [key (.-key event)]
-        (cond
-          ;; Space bar: play/pause
-          (= key " ")
-          (do
-            (.preventDefault event)
-            (when-let [audio-player @audio-player-instance]
-              (player/toggle-playback audio-player)))
-          
-          ;; Escape: hide control panel if open
-          (= key "Escape")
-          (let [show? (get-in @state/app-state [:ui :show-control-panel])]
-            (when show?
-              (state/dispatch :hide-control-panel))))))))
+  (when-let [handler @keyboard-shortcuts-handler]
+    (js/document.removeEventListener "keydown" handler))
+  (let [handler (fn [event]
+                  (let [key (.-key event)]
+                    (cond
+                      ;; Space bar: play/pause
+                      (= key " ")
+                      (do
+                        (.preventDefault event)
+                        (when-let [audio-player @audio-player-instance]
+                          (player/toggle-playback audio-player)))
+
+                      ;; Escape: hide control panel if open
+                      (= key "Escape")
+                      (let [show? (get-in @state/app-state [:ui :show-control-panel])]
+                        (when show?
+                          (state/dispatch :hide-control-panel))))))]
+    (reset! keyboard-shortcuts-handler handler)
+    (js/document.addEventListener "keydown" handler)))
 
 (defn setup-ui-hooks
   "Set up UI event handlers and lifecycle hooks."

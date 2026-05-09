@@ -262,8 +262,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## AI Recommended Todo:
 
-Guard global listeners for hot reload/re-init. init.cljs (line 57) adds a keydown listener each init without a teardown or defonce guard. Shadow reloads could stack duplicate shortcuts.
-
 Make canvas rendering retina-aware. view.cljs (line 39) sets canvas width/height to CSS pixels. On high-DPI displays, visuals will look softer than they need to. I’d multiply backing dimensions by devicePixelRatio and scale the 2D context.
 
 Add tests around the pure parts. I found no test files. The best first targets are canvas.model.cljs (line 132) split/remove behavior and audio.sample-puller circular buffer behavior.
