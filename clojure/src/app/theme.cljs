@@ -24,7 +24,7 @@
    
    :papyrus
    {:name "Papyrus" ; comfy graphite on beige
-    :shape :boxy
+    :shape :rounded
     :colors {:background "#E9DFC8"
              :surface "#F4ECD8"
              :text "#3B3833"
@@ -46,7 +46,7 @@
    
    :vaporwave
    {:name "Vaporwave" ; lighter than night drive, pastels
-    :shape :rounded
+    :shape :boxy
     :colors {:background "#20123a"
              :surface "#35205f"
              :text "#fff4ff"
