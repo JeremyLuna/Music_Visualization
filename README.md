@@ -264,8 +264,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 Make canvas rendering retina-aware. view.cljs (line 39) sets canvas width/height to CSS pixels. On high-DPI displays, visuals will look softer than they need to. I’d multiply backing dimensions by devicePixelRatio and scale the 2D context.
 
-Add tests around the pure parts. I found no test files. The best first targets are canvas.model.cljs (line 132) split/remove behavior and audio.sample-puller circular buffer behavior.
-
 ## Resources
 
 - https://www.mathworks.com/help/wavelet/ref/vmd.html
