@@ -262,8 +262,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## AI Recommended Todo:
 
-Clean up audio file loading. player.cljs (line 88) decodes the whole file but then plays via an object URL, and that object URL is never revoked. I’d either use decoded buffers directly or drop the decode step, then revoke the previous URL when a new file is loaded.
-
 Reduce render-loop state writes. engine.cljs (line 51) and engine.cljs (line 67) swap! app state every animation frame. That can force unnecessary Reagent invalidation at 60fps. I’d keep per-frame visualizer runtime state outside the global UI atom, or only write when something actually changes.
 
 Guard global listeners for hot reload/re-init. init.cljs (line 57) adds a keydown listener each init without a teardown or defonce guard. Shadow reloads could stack duplicate shortcuts.
