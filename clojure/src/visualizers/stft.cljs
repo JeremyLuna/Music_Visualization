@@ -236,10 +236,25 @@
   (let [ctx (interop/get-canvas-context canvas-element)
         width (interop/get-canvas-width canvas-element)
         height (interop/get-canvas-height canvas-element)
+        pixel-ratio (interop/get-canvas-pixel-ratio canvas-element)
+        backing-width (.-width canvas-element)
+        backing-height (.-height canvas-element)
+        scroll-pixels (max 1 (int (js/Math.round pixel-ratio)))
+        copy-width (max 0 (- backing-width scroll-pixels))
+        clear-x (max 0 (- backing-width scroll-pixels))
         bin-count (.-length mags)]
     (when (and (pos? width) (pos? height) (pos? bin-count))
-      ;; Scroll history left by one pixel, then draw the newest spectrum at right.
-      (.drawImage ctx canvas-element -1 0)
+      ;; Scroll history left by one logical pixel without resampling accumulated pixels.
+      (.save ctx)
+      (.setTransform ctx 1 0 0 1 0 0)
+      (set! (.-imageSmoothingEnabled ctx) false)
+      (when (pos? copy-width)
+        (.drawImage ctx
+                    canvas-element
+                    scroll-pixels 0 copy-width backing-height
+                    0 0 copy-width backing-height))
+      (.clearRect ctx clear-x 0 scroll-pixels backing-height)
+      (.restore ctx)
       (let [column-x (dec width)
             bin-height (/ height bin-count)
             db-range (- max-db min-db)]

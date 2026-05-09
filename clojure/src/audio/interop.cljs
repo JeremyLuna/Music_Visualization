@@ -1,7 +1,8 @@
 (ns audio.interop
   "JavaScript interop layer for Web Audio API, Canvas 2D, and FFT.
    
-   Provides ClojureScript wrappers around browser APIs.")
+   Provides ClojureScript wrappers around browser APIs."
+  (:require [goog.object :as gobj]))
 
 ;; ============================================================================
 ;; Web Audio API Interop
@@ -143,14 +144,27 @@
     (.putImageData ctx image-data 0 0)))
 
 (defn get-canvas-width
-  "Get the width of a canvas element."
+  "Get the logical CSS width of a canvas element."
   [canvas-element]
-  (.-width canvas-element))
+  (or (gobj/get canvas-element "__logicalWidth")
+      (.-clientWidth canvas-element)
+      (.-width canvas-element)))
 
 (defn get-canvas-height
-  "Get the height of a canvas element."
+  "Get the logical CSS height of a canvas element."
   [canvas-element]
-  (.-height canvas-element))
+  (or (gobj/get canvas-element "__logicalHeight")
+      (.-clientHeight canvas-element)
+      (.-height canvas-element)))
+
+(defn get-canvas-pixel-ratio
+  "Get the ratio between backing-store pixels and logical CSS pixels."
+  [canvas-element]
+  (or (gobj/get canvas-element "__pixelRatio")
+      (let [logical-width (get-canvas-width canvas-element)]
+        (if (pos? logical-width)
+          (/ (.-width canvas-element) logical-width)
+          1))))
 
 (defn set-canvas-size
   "Set the width and height of a canvas element."

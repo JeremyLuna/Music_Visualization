@@ -6,11 +6,33 @@
   (:require [reagent.core :as r]
             [app.state :as state]
             [app.theme :as theme]
-            [canvas.model :as model]))
+            [canvas.model :as model]
+            [goog.object :as gobj]))
 
 ;; ============================================================================
 ;; Helper functions
 ;; ============================================================================
+
+(defn- device-pixel-ratio
+  []
+  (max 1 (or (.-devicePixelRatio js/window) 1)))
+
+(defn- sync-canvas-backing-store!
+  [canvas width height]
+  (let [ratio (device-pixel-ratio)
+        logical-width (max 0 width)
+        logical-height (max 0 height)
+        backing-width (int (js/Math.round (* logical-width ratio)))
+        backing-height (int (js/Math.round (* logical-height ratio)))]
+    (gobj/set canvas "__logicalWidth" logical-width)
+    (gobj/set canvas "__logicalHeight" logical-height)
+    (gobj/set canvas "__pixelRatio" ratio)
+    (when (or (not= (.-width canvas) backing-width)
+              (not= (.-height canvas) backing-height))
+      (set! (.-width canvas) backing-width)
+      (set! (.-height canvas) backing-height))
+    (when-let [ctx (.getContext canvas "2d")]
+      (.setTransform ctx ratio 0 0 ratio 0 0))))
 
 (defn canvas-element
   "Create a canvas DOM element with sizing."
@@ -18,6 +40,7 @@
   (let [el-ref (r/atom nil)
         registered-el (atom nil)
         resize-observer (atom nil)
+        resize-listener (atom nil)
         register! (fn [id]
                     (when-let [el @el-ref]
                       (reset! registered-el el)
@@ -31,19 +54,25 @@
       (fn [this]
         (let [[_ mounted-canvas-id] (r/argv this)]
           (register! mounted-canvas-id))
+        (when-let [el @el-ref]
+          (sync-canvas-backing-store! el (.-clientWidth el) (.-clientHeight el)))
         (when (exists? js/ResizeObserver)
           (let [observer (js/ResizeObserver.
                          (fn [entries]
-                           ;; Update canvas internal resolution to match CSS size
+                           ;; Keep the backing store sharp while drawing in CSS pixels.
                            (doseq [entry entries]
                              (let [rect (.-contentRect entry)
                                    width (.-width rect)
                                    height (.-height rect)
                                    canvas (.-target entry)]
-                               (set! (.-width canvas) (int width))
-                               (set! (.-height canvas) (int height))))))]
+                               (sync-canvas-backing-store! canvas width height)))))]
             (reset! resize-observer observer)
-            (.observe observer @el-ref))))
+            (.observe observer @el-ref)))
+        (let [listener (fn []
+                         (when-let [el @el-ref]
+                           (sync-canvas-backing-store! el (.-clientWidth el) (.-clientHeight el))))]
+          (reset! resize-listener listener)
+          (.addEventListener js/window "resize" listener)))
 
       :component-did-update
       (fn [this old-argv]
@@ -59,6 +88,9 @@
           (when-let [observer @resize-observer]
             (.disconnect observer)
             (reset! resize-observer nil))
+          (when-let [listener @resize-listener]
+            (.removeEventListener js/window "resize" listener)
+            (reset! resize-listener nil))
           (unregister! unmounted-canvas-id)))
       
       :reagent-render

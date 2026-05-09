@@ -260,10 +260,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
         - can reuse character models for dance floor
         - can have screen behind dj that nests a visualizer
 
-## AI Recommended Todo:
-
-Make canvas rendering retina-aware. view.cljs (line 39) sets canvas width/height to CSS pixels. On high-DPI displays, visuals will look softer than they need to. I’d multiply backing dimensions by devicePixelRatio and scale the 2D context.
-
 ## Resources
 
 - https://www.mathworks.com/help/wavelet/ref/vmd.html
