@@ -17,7 +17,7 @@
     :ui {:show-control-panel false
          :interaction-active true
          :settings {}}
-    :visualizers {:instances {}  ;; {canvas-id -> visualizer instance}}
+    :visualizers {}              ;; Reserved for visualizer UI state; runtime instances live in visualizers.engine.
     :samples {:channels {}}})"
   (:require [reagent.core :as r]
             [app.theme :as theme]
@@ -44,7 +44,7 @@
          :interaction-active true
          :settings {}
          :theme theme/default-theme}
-    :visualizers {:instances {}}
+    :visualizers {}
     :canvas-elements {}
     :samples {:channels {}}}))
 
@@ -169,11 +169,7 @@
                          (update :canvas-elements
                                  (fn [m]
                                    (into {}
-                                         (filter (fn [[id _]] (contains? remaining-ids id)) m))))
-                         (update-in [:visualizers :instances]
-                                    (fn [m]
-                                      (into {}
-                                            (filter (fn [[id _]] (contains? remaining-ids id)) m)))))))))))
+                                         (filter (fn [[id _]] (contains? remaining-ids id)) m)))))))))))
 
     :resize-split
     (let [[split-id sizes] args]
@@ -183,23 +179,13 @@
     (let [[canvas-id visualizer-type] args]
       (swap! app-state
              (fn [s]
-               (-> s
-                   (update-in [:layout :root] model/change-canvas-visualizer canvas-id visualizer-type)
-                   (assoc-in [:visualizers :instances canvas-id]
-                             {:type visualizer-type
-                              :settings (get-in s [:visualizers :instances canvas-id :settings] {})})))))
+               (update-in s [:layout :root] model/change-canvas-visualizer canvas-id visualizer-type))))
     
     :update-visualizer-settings
     (let [[canvas-id settings] args]
       (swap! app-state
              (fn [s]
-               (-> s
-                   (update-in [:layout :root] model/update-canvas-settings canvas-id settings)
-                   (update-in [:visualizers :instances canvas-id :settings]
-                              (fn [existing]
-                                (if (fn? settings)
-                                  (settings (or existing {}))
-                                  (merge (or existing {}) settings))))))))
+               (update-in s [:layout :root] model/update-canvas-settings canvas-id settings))))
     
     (do
       (.warn js/console "Unknown action:" action))))

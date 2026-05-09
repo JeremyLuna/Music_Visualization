@@ -1,12 +1,12 @@
 (ns visualizers.engine
   "Visualizer runtime loop that renders active visualizers per canvas."
   (:require [app.state :as state]
-            [canvas.model :as canvas-model]
             [visualizers.registry :as registry]
             [visualizers.protocol :as protocol]))
 
 (defonce running? (atom false))
 (defonce raf-id (atom nil))
+(defonce runtime-instances (atom {}))
 
 (defn- layout-canvas-nodes
   [node]
@@ -19,12 +19,12 @@
 
 (defn- ensure-visualizer-instance!
   [canvas-id visualizer-type settings]
-  (let [existing-entry (get-in @state/app-state [:visualizers :instances canvas-id])
+  (let [existing-entry (get @runtime-instances canvas-id)
         existing (:instance existing-entry)
         existing-type (:type existing-entry)]
     (when (or (nil? existing) (not= existing-type visualizer-type))
       (if-let [instance (apply registry/create-visualizer visualizer-type (mapcat identity settings))]
-        (swap! state/app-state assoc-in [:visualizers :instances canvas-id]
+        (swap! runtime-instances assoc canvas-id
                {:type visualizer-type
                 :settings settings
                 :instance instance})
@@ -32,11 +32,23 @@
 
 (defn- sync-visualizer-settings!
   [canvas-id settings]
-  (when-let [viz (get-in @state/app-state [:visualizers :instances canvas-id :instance])]
-    (let [current-settings (protocol/get-settings viz)]
+  (when-let [viz (get-in @runtime-instances [canvas-id :instance])]
+    (let [current-settings (get-in @runtime-instances [canvas-id :settings])]
       (when (not= current-settings settings)
         (let [updated (protocol/update-settings viz settings)]
-          (swap! state/app-state assoc-in [:visualizers :instances canvas-id :instance] updated))))))
+          (swap! runtime-instances assoc canvas-id
+                 {:type (get-in @runtime-instances [canvas-id :type])
+                  :settings settings
+                  :instance updated}))))))
+
+(defn- prune-orphan-instances!
+  [active-ids]
+  (let [known-ids (set (keys @runtime-instances))]
+    (when (not= known-ids active-ids)
+      (swap! runtime-instances
+             (fn [instances]
+               (into {}
+                     (filter (fn [[id _]] (contains? active-ids id)) instances)))))))
 
 (defn- render-step!
   []
@@ -49,10 +61,7 @@
         active-ids (set (map :id nodes))]
 
     ;; Remove orphan visualizer instances
-    (swap! state/app-state update-in [:visualizers :instances]
-           (fn [instances]
-             (into {}
-                   (filter (fn [[id _]] (contains? active-ids id)) instances))))
+    (prune-orphan-instances! active-ids)
 
     ;; Render all active canvas visualizers
     (doseq [node nodes]
@@ -64,8 +73,7 @@
         (when (and canvas-el sample-puller)
           (ensure-visualizer-instance! canvas-id visualizer-type settings)
           (sync-visualizer-settings! canvas-id settings)
-          (swap! state/app-state assoc-in [:visualizers :instances canvas-id :settings] settings)
-          (when-let [viz (get-in @state/app-state [:visualizers :instances canvas-id :instance])]
+          (when-let [viz (get-in @runtime-instances [canvas-id :instance])]
             (protocol/render viz canvas-el sample-puller)))))))
 
 (defn- tick!
@@ -88,4 +96,5 @@
     (when-let [id @raf-id]
       (js/cancelAnimationFrame id))
     (reset! raf-id nil)
+    (reset! runtime-instances {})
     (.log js/console "Visualizer engine stopped")))

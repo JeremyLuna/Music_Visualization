@@ -197,7 +197,7 @@ The app keeps browser-facing mutable state in one Reagent atom:
 - `:audio`: audio context, player, sample puller, playback state, duration, current time, and volume
 - `:layout`: the immutable canvas layout tree and next canvas ID
 - `:ui`: control panel state
-- `:visualizers`: active visualizer instances and settings
+- `:visualizers`: reserved for visualizer UI state
 - `:canvas-elements`: mounted canvas DOM nodes keyed by canvas ID
 - `:samples`: sample storage hooks for future expansion
 
@@ -226,7 +226,7 @@ Visualizers implement `visualizers.protocol/IVisualizer`:
 - `update-settings`: apply per-canvas settings
 - `get-settings`: expose current settings
 
-The render loop in `visualizers.engine` walks the active layout, creates or reuses visualizer instances, syncs settings, and renders each mounted canvas on every animation frame.
+The render loop in `visualizers.engine` walks the active layout, creates or reuses visualizer instances from private runtime state, syncs settings only when they change, and renders each mounted canvas on every animation frame.
 
 ## Adding a Visualizer
 
@@ -261,8 +261,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
         - can have screen behind dj that nests a visualizer
 
 ## AI Recommended Todo:
-
-Reduce render-loop state writes. engine.cljs (line 51) and engine.cljs (line 67) swap! app state every animation frame. That can force unnecessary Reagent invalidation at 60fps. I’d keep per-frame visualizer runtime state outside the global UI atom, or only write when something actually changes.
 
 Guard global listeners for hot reload/re-init. init.cljs (line 57) adds a keydown listener each init without a teardown or defonce guard. Shadow reloads could stack duplicate shortcuts.
 
