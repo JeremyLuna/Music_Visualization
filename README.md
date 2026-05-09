@@ -172,7 +172,7 @@ npm run serve:release
 
 3. Confirm `clojure/public/js/main.js` exists and has content.
 
-### "Cannot GET /js/main.js"
+### Main Bundle Does Not Load
 
 The dev server is not running, or it is serving from the wrong directory. Run this from `clojure/`:
 
@@ -261,7 +261,6 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
         - can have screen behind dj that nests a visualizer
 
 ## AI Recommended Todo:
-Fix deployment-relative paths first. The README points to GitHub Pages under /Music_Visualization/, but index.html (line 31) loads /js/main.js, shadow-cljs.edn (line 7) uses :asset-path "/js", and player.cljs (line 50) loads /sample_processor.js. Those root-relative paths are likely to break on a project page unless the site is deployed at domain root.
 
 Clean up audio file loading. player.cljs (line 88) decodes the whole file but then plays via an object URL, and that object URL is never revoked. I’d either use decoded buffers directly or drop the decode step, then revoke the previous URL when a new file is loaded.
 

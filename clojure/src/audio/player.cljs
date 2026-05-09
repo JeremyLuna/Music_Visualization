@@ -47,7 +47,7 @@
              _ (interop/connect-nodes gain-node (interop/get-audio-context-destination audio-context))]
          
          ;; Now load the AudioWorklet for sample capture
-         (-> (interop/create-audio-worklet audio-context "/sample_processor.js" "sample-processor")
+         (-> (interop/create-audio-worklet audio-context "sample_processor.js" "sample-processor")
              (.then (fn [worklet-node]
                       ;; Capture samples before speaker gain so playback volume
                       ;; does not change visualization amplitude.
