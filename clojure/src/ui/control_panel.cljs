@@ -450,6 +450,45 @@
          [color-setting-row canvas-id settings effective-settings :grid-color "Grid"]
          [color-setting-row canvas-id settings effective-settings :axis-color "Axis"]]
 
+        :fir-analytic
+        [:<>
+         [:label {:style {:display "block" :margin-bottom "4px"}} "Window Size"]
+         [:input {:type "number"
+                  :min 128 :max 8192 :step 1
+                  :style (inline-input-style theme-state)
+                  :value (or (:window-size settings) 1023)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:window-size (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Draw Count"]
+         [:input {:type "number"
+                  :min 2 :max 8192 :step 1
+                  :style (inline-input-style theme-state)
+                  :value (or (:draw-count settings) 511)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:draw-count (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Draw Range"]
+         [:select {:value (name (or (:draw-position settings) :center))
+                   :style (inline-input-style theme-state)
+                   :on-change #(state/dispatch :update-visualizer-settings
+                                               canvas-id
+                                               {:draw-position (keyword (-> % .-target .-value))})}
+          [:option {:value "center"} "Center"]
+          [:option {:value "newest"} "Newest"]]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Line Width"]
+         [:input {:type "number"
+                  :min 1 :max 8 :step 1
+                  :style (inline-input-style theme-state)
+                  :value (or (:line-width settings) 2)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:line-width (js/parseInt (-> % .-target .-value))})}]
+         [color-setting-row canvas-id settings effective-settings :line-color "Line"]
+         [color-setting-row canvas-id settings effective-settings :background-color "Background"]
+         [color-setting-row canvas-id settings effective-settings :grid-color "Grid"]
+         [color-setting-row canvas-id settings effective-settings :axis-color "Axis"]]
+
         [:p {:style {:margin 0 :color (:muted-text colors)}} "No settings for this visualizer."])]]))
 
 ;; ============================================================================
