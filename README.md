@@ -239,7 +239,8 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 ## Todo List
 
 - Add swapping behavior for dividers.
-- Add analytic signal.
+- Analytic signal:
+    - is either starting or ending at corners?
 - Add adjustable range for spectrogram.
 - Add constant Q transform.
     - Route to multi-oscilloscope.

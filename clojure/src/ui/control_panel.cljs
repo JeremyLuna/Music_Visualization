@@ -391,6 +391,65 @@
          [color-setting-row canvas-id settings effective-settings :spectrogram-mid-color "Mid"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-high-color "High"]]
 
+        :analytic
+        [:<>
+         [:label {:style {:display "block" :margin-bottom "4px"}} "Sample Mode"]
+         [:select {:value (name (or (:sample-mode settings) :since-last-frame))
+                   :style (inline-input-style theme-state)
+                   :on-change #(state/dispatch :update-visualizer-settings
+                                               canvas-id
+                                               {:sample-mode (keyword (-> % .-target .-value))})}
+         [:option {:value "since-last-frame"} "Since Last Frame"]
+         [:option {:value "fixed-window"} "Fixed Window"]]
+         [:label {:style {:display "flex"
+                          :align-items "center"
+                          :gap "6px"
+                          :margin "6px 0 4px"}}
+          [:input {:type "checkbox"
+                   :checked (if (contains? settings :continuous?)
+                              (:continuous? settings)
+                              true)
+                   :on-change #(state/dispatch :update-visualizer-settings
+                                               canvas-id
+                                               {:continuous? (-> % .-target .-checked)})}]
+          "Continuous Trail"]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Fade Amount"]
+         [:input {:type "number"
+                  :min 0 :max 1 :step 0.01
+                  :style (inline-input-style theme-state)
+                  :value (or (:fade-alpha settings) 0.08)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:fade-alpha (js/parseFloat (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Sample Count"]
+         [:input {:type "number"
+                  :min 128 :max 8192 :step 128
+                  :style (inline-input-style theme-state)
+                  :value (or (:sample-count settings) 2048)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:sample-count (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Max Frame Samples"]
+         [:input {:type "number"
+                  :min 128 :max 8192 :step 128
+                  :style (inline-input-style theme-state)
+                  :value (or (:max-samples settings) 4096)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:max-samples (js/parseInt (-> % .-target .-value))})}]
+         [:label {:style {:display "block" :margin "6px 0 4px"}} "Line Width"]
+         [:input {:type "number"
+                  :min 1 :max 8 :step 1
+                  :style (inline-input-style theme-state)
+                  :value (or (:line-width settings) 2)
+                  :on-change #(state/dispatch :update-visualizer-settings
+                                              canvas-id
+                                              {:line-width (js/parseInt (-> % .-target .-value))})}]
+         [color-setting-row canvas-id settings effective-settings :line-color "Line"]
+         [color-setting-row canvas-id settings effective-settings :background-color "Background"]
+         [color-setting-row canvas-id settings effective-settings :grid-color "Grid"]
+         [color-setting-row canvas-id settings effective-settings :axis-color "Axis"]]
+
         [:p {:style {:margin 0 :color (:muted-text colors)}} "No settings for this visualizer."])]]))
 
 ;; ============================================================================
