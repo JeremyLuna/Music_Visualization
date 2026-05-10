@@ -13,7 +13,7 @@
 ;; ============================================================================
 
 (def default-settings
-  {:kernel-size 767
+  {:kernel-size 1023
    :window-size 1023
    :draw-count 511
    :draw-position :center
@@ -41,7 +41,7 @@
 
 (defn- odd-size
   [value]
-  (let [n (int (clamp (or value 767) 3 4095))]
+  (let [n (int (clamp (or value 1023) 3 4095))]
     (if (odd? n) n (dec n))))
 
 (defn- effective-settings
