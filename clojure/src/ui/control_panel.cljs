@@ -452,6 +452,128 @@
            [color-setting-row canvas-id settings effective-settings :spectrogram-mid-color "Mid"]
            [color-setting-row canvas-id settings effective-settings :spectrogram-high-color "High"]])
 
+        :polyphonic-oscilloscope
+        (let [bins-per-octave (or (:bins-per-octave settings) 24)
+              q (constant-q-factor bins-per-octave)]
+          [:<>
+           [:label {:style {:display "block" :margin-bottom "4px"}} "Bins / Octave"]
+           [:input {:type "number"
+                    :min 1 :max 96 :step 1
+                    :style (inline-input-style theme-state)
+                    :value bins-per-octave
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:bins-per-octave (js/parseInt (-> % .-target .-value))})}]
+           [:div {:style {:margin-top "4px"
+                          :font-size "10px"
+                          :color (:muted-text colors)}}
+            (str "Q " (format-decimal q 2))]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Min Frequency (Hz)"]
+           [:input {:type "number"
+                    :min 1 :max 22050 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:min-frequency settings) 55)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:min-frequency (js/parseFloat (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Max Frequency (Hz)"]
+           [:input {:type "number"
+                    :min 1 :max 22050 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:max-frequency settings) 7040)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:max-frequency (js/parseFloat (-> % .-target .-value))})}]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Threshold (dB)"]
+           [:input {:type "range"
+                    :class "themed-range"
+                    :min -100 :max -10 :step 1
+                    :style {:width "100%" :accent-color (:primary colors)}
+                    :value (or (:threshold-db settings) -52)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:threshold-db (js/parseFloat (-> % .-target .-value))})}]
+           [:div {:style {:font-size "10px" :color (:muted-text colors)}}
+            (str (or (:threshold-db settings) -52) " dB")]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Band Selection"]
+           [:select {:value (name (or (:selection-mode settings) :peaks))
+                     :style (inline-input-style theme-state)
+                     :on-change #(state/dispatch :update-visualizer-settings
+                                                 canvas-id
+                                                 {:selection-mode (keyword (-> % .-target .-value))})}
+            [:option {:value "peaks"} "Peak bins"]
+            [:option {:value "active"} "All active bands"]
+            [:option {:value "neighbor-sum"} "Peaks + neighbor sum"]]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Neighbor Bins"]
+           [:input {:type "number"
+                    :min 0 :max 6 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:neighbor-bins settings) 1)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:neighbor-bins (js/parseInt (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Harmonics"]
+           [:input {:type "number"
+                    :min 1 :max 16 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:harmonic-count settings) 5)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:harmonic-count (js/parseInt (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Max Traces"]
+           [:input {:type "number"
+                    :min 1 :max 96 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:max-traces settings) 28)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:max-traces (js/parseInt (-> % .-target .-value))})}]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Cycles"]
+           [:input {:type "number"
+                    :min 0.5 :max 12 :step 0.5
+                    :style (inline-input-style theme-state)
+                    :value (or (:cycles settings) 3)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:cycles (js/parseFloat (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Amplitude Gain"]
+           [:input {:type "number"
+                    :min 0.1 :max 30 :step 0.1
+                    :style (inline-input-style theme-state)
+                    :value (or (:amplitude-gain settings) 3.5)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:amplitude-gain (js/parseFloat (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Line Width"]
+           [:input {:type "number"
+                    :min 1 :max 8 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:line-width settings) 2)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:line-width (js/parseInt (-> % .-target .-value))})}]
+
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Color Mode"]
+           [:select {:value (name (or (:color-mode settings) :theme))
+                     :style (inline-input-style theme-state)
+                     :on-change #(let [next-mode (keyword (-> % .-target .-value))]
+                                   (if (= next-mode :theme)
+                                     (reset-visualizer-setting! canvas-id :color-mode)
+                                     (state/dispatch :update-visualizer-settings
+                                                     canvas-id
+                                                     {:color-mode next-mode})))}
+            [:option {:value "theme"} "Theme Color"]
+            [:option {:value "hsi-octave"} "HSI Octave Hue"]]
+           [color-setting-row canvas-id settings effective-settings :trace-color "Trace"]
+           [color-setting-row canvas-id settings effective-settings :background-color "Background"]
+           [color-setting-row canvas-id settings effective-settings :grid-color "Grid"]
+           [color-setting-row canvas-id settings effective-settings :label-color "Labels"]])
+
         :fir-analytic
         [:<>
          [:label {:style {:display "block" :margin-bottom "4px"}} "Window Size"]

@@ -5,6 +5,7 @@
    to create instances on demand."
   (:require [visualizers.cqt :as cqt]
             [visualizers.fir-analytic :as fir-analytic]
+            [visualizers.polyphonic-oscilloscope :as polyphonic-oscilloscope]
             [visualizers.stft :as stft]
             [visualizers.waveform :as waveform]))
 
@@ -22,6 +23,9 @@
    :cqt      {:name "Constant-Q Spectrogram"
               :factory cqt/create-cqt-visualizer
               :theme-settings cqt/theme-settings}
+   :polyphonic-oscilloscope {:name "Polyphonic Oscilloscope"
+                             :factory polyphonic-oscilloscope/create-polyphonic-oscilloscope-visualizer
+                             :theme-settings polyphonic-oscilloscope/theme-settings}
    :waveform {:name "Waveform"
               :factory waveform/create-waveform-visualizer
               :theme-settings waveform/theme-settings}
