@@ -3,8 +3,7 @@
    
    Maintains a registry of available visualizers and provides factory functions
    to create instances on demand."
-  (:require [visualizers.analytic :as analytic]
-            [visualizers.fir-analytic :as fir-analytic]
+  (:require [visualizers.fir-analytic :as fir-analytic]
             [visualizers.stft :as stft]
             [visualizers.waveform :as waveform]))
 
@@ -22,9 +21,6 @@
    :waveform {:name "Waveform"
               :factory waveform/create-waveform-visualizer
               :theme-settings waveform/theme-settings}
-   :analytic {:name "Analytic Signal"
-              :factory analytic/create-analytic-signal-visualizer
-              :theme-settings analytic/theme-settings}
    :fir-analytic {:name "FIR Analytic Signal"
                   :factory fir-analytic/create-fir-analytic-signal-visualizer
                   :theme-settings fir-analytic/theme-settings}})
