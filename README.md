@@ -242,7 +242,7 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 - Analytic signal:
     - is either starting or ending at corners?
 - Add adjustable range for spectrogram.
-- Add constant Q transform.
+- Add constant Q filter
     - Route to multi-oscilloscope.
     - Route to multi-analytic signal.
 - Add levels bars / plot.

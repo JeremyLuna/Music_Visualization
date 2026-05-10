@@ -3,7 +3,8 @@
    
    Maintains a registry of available visualizers and provides factory functions
    to create instances on demand."
-  (:require [visualizers.fir-analytic :as fir-analytic]
+  (:require [visualizers.cqt :as cqt]
+            [visualizers.fir-analytic :as fir-analytic]
             [visualizers.stft :as stft]
             [visualizers.waveform :as waveform]))
 
@@ -18,6 +19,9 @@
   {:stft     {:name "STFT Spectrogram"
               :factory stft/create-stft-visualizer
               :theme-settings stft/theme-settings}
+   :cqt      {:name "Constant-Q Spectrogram"
+              :factory cqt/create-cqt-visualizer
+              :theme-settings cqt/theme-settings}
    :waveform {:name "Waveform"
               :factory waveform/create-waveform-visualizer
               :theme-settings waveform/theme-settings}

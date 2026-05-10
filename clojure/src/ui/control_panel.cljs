@@ -94,6 +94,19 @@
   [canvas-id setting-key]
   (state/dispatch :update-visualizer-settings canvas-id #(dissoc % setting-key)))
 
+(defn- constant-q-factor
+  [bins-per-octave]
+  (let [safe-bins-per-octave (if (and (number? bins-per-octave)
+                                      (js/isFinite bins-per-octave)
+                                      (pos? bins-per-octave))
+                               bins-per-octave
+                               12)]
+    (/ 1 (- (js/Math.pow 2 (/ 1 safe-bins-per-octave)) 1))))
+
+(defn- format-decimal
+  [value digits]
+  (.toFixed value digits))
+
 (defn- theme-color-label
   [color-key]
   (case color-key
@@ -390,6 +403,54 @@
          [color-setting-row canvas-id settings effective-settings :spectrogram-low-color "Low"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-mid-color "Mid"]
          [color-setting-row canvas-id settings effective-settings :spectrogram-high-color "High"]]
+
+        :cqt
+        (let [bins-per-octave (or (:bins-per-octave settings) 12)
+              q (constant-q-factor bins-per-octave)]
+          [:<>
+           [:label {:style {:display "block" :margin-bottom "4px"}} "Bins / Octave"]
+           [:input {:type "number"
+                    :min 1 :max 96 :step 1
+                    :style (inline-input-style theme-state)
+                    :value bins-per-octave
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:bins-per-octave (js/parseInt (-> % .-target .-value))})}]
+           [:div {:style {:margin-top "4px"
+                          :font-size "10px"
+                          :color (:muted-text colors)}}
+            (str "Q " (format-decimal q 2))]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Min Frequency (Hz)"]
+           [:input {:type "number"
+                    :min 1 :max 22050 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:min-frequency settings) 55)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:min-frequency (js/parseFloat (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Max Frequency (Hz)"]
+           [:input {:type "number"
+                    :min 1 :max 22050 :step 1
+                    :style (inline-input-style theme-state)
+                    :value (or (:max-frequency settings) 7040)
+                    :on-change #(state/dispatch :update-visualizer-settings
+                                                canvas-id
+                                                {:max-frequency (js/parseFloat (-> % .-target .-value))})}]
+           [:label {:style {:display "block" :margin "6px 0 4px"}} "Color Map"]
+           [:select {:value (name (or (:color-map settings) :theme))
+                     :style (inline-input-style theme-state)
+                     :on-change #(let [next-map (keyword (-> % .-target .-value))]
+                                   (if (= next-map :theme)
+                                     (reset-visualizer-setting! canvas-id :color-map)
+                                     (state/dispatch :update-visualizer-settings
+                                                     canvas-id
+                                                     {:color-map next-map})))}
+            [:option {:value "theme"} "Theme Gradient"]
+            [:option {:value "gray"} "Gray"]
+            [:option {:value "hot"} "Hot"]]
+           [color-setting-row canvas-id settings effective-settings :spectrogram-low-color "Low"]
+           [color-setting-row canvas-id settings effective-settings :spectrogram-mid-color "Mid"]
+           [color-setting-row canvas-id settings effective-settings :spectrogram-high-color "High"]])
 
         :fir-analytic
         [:<>
