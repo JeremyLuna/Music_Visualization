@@ -238,12 +238,12 @@ The render loop in `visualizers.engine` walks the active layout, creates or reus
 
 ## Todo List
 
+- deploy main branch to pages
 - Add swapping behavior for dividers.
-- Analytic signal:
-    - is either starting or ending at corners?
 - Add adjustable range for spectrogram.
+- polyphonic oscilloscope
+    - stabalize, maybe stabalize to neighbor bin if that was used for previous frame
 - Add constant Q filter
-    - Route to multi-oscilloscope.
     - Route to multi-analytic signal.
 - Add levels bars / plot.
 - Add spiral levels visualization.
